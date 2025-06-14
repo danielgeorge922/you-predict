@@ -7,3 +7,8 @@ GET http://localhost:8000/ HTTP/1.1
 ### testing initial youtube apis
 GET http://localhost:8000/channels/test-api HTTP/1.1
 
+### testing a specific channel info
+GET http://localhost:8000/channels/info/UCX6OQ3DkcsbYNE6H8uQQuVA
+
+### testing a specific channel info
+GET http://localhost:8000/channels/quota

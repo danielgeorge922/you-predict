@@ -1,0 +1,45 @@
+-- 1. CHANNELS: Static channel metadata
+channels:
+- channel_id (PK)
+- channel_name, description
+- subscriber_count, total_view_count, video_count
+- created_at, updated_at
+- avg_views_last_30_days (calculated field)
+- upload_frequency_per_week (calculated)
+
+-- 2. VIDEOS: Static video metadata  
+videos:
+- video_id (PK)
+- channel_id (FK)
+- title, description, duration_seconds
+- published_at, category_id, tags (JSON)
+- upload_hour, upload_day_of_week
+- days_since_last_upload
+- created_at, updated_at
+
+-- 3. VIDEO_SNAPSHOTS: Time-windowed engagement data (KEY TABLE)
+video_snapshots:
+- id (PK)
+- video_id (FK)  
+- hours_after_publish (1, 2, 4, 6, 12, 24, 48)
+- view_count, like_count, comment_count
+- recorded_at
+
+-- 4. PREDICTIONS: Model predictions and results
+predictions:
+- id (PK)
+- video_id (FK)
+- predicted_views_24h
+- actual_views_24h (filled after 24hrs)
+- baseline_prediction (from XGBoost)
+- virality_score (0-1 from classifier)
+- final_multiplier (applied multiplier)
+- model_version, features_used (JSON)
+- predicted_at
+
+-- 5. MODEL_PERFORMANCE: Track model accuracy over time
+model_performance:
+- id (PK)
+- model_version, evaluation_date
+- mae, rmse, mape (error metrics)
+- sample_size, viral_detection_accuracy
