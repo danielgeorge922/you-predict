@@ -1,6 +1,7 @@
 import os
 from typing import List, Optional
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import validator
 
 
 class Settings(BaseSettings):
@@ -66,6 +67,7 @@ class Settings(BaseSettings):
         """Pydantic configuration."""
         env_file = ".env"  # Automatically load from .env file
         case_sensitive = False  # Allow case-insensitive env vars
+        extra = "ignore"
 
 
 # Global settings instance

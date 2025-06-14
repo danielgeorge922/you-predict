@@ -1,0 +1,5 @@
+### testing initial health
+GET http://localhost:8000/health HTTP/1.1
+
+### testing initial welcome message
+GET http://localhost:8000/ HTTP/1.1

@@ -11,11 +11,16 @@ from src.api.routes import health
 # TODO: Import these as we build them
 # from src.api.routes import predictions, channels, metrics
 from src.config.settings import settings
-from src.utils.database import db_manager
+
+# TODO: Import when ready
+# from src.utils.database import db_manager
 
 # Set up structured logging
 logger = structlog.get_logger()
 
+# ////////////////////////////////////////////////////////////////////////////////////////////////////
+# Everything here runs on startup (before yield), when closing everything runs after yield
+# ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,9 +28,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting YouTube View Predictor API...")
     
     # Initialize database
-    if not db_manager.health_check():
-        logger.error("Database connection failed!")
-        raise Exception("Cannot start without database")
+
+    # TODO: Uncomment when database setup is ready
+    # if not db_manager.health_check():
+    #     logger.error("Database connection failed!")
+    #     raise Exception("Cannot start without database")
     
     # TODO: Load ML models into memory here
     # model_manager.load_latest_model()
@@ -39,8 +46,10 @@ async def lifespan(app: FastAPI):
     # TODO: Clean up resources, close connections
     logger.info("API shutdown complete!")
 
+# //////////////////////
+# Config inital setup
+# //////////////////////
 
-# Create FastAPI application
 app = FastAPI(
     title="YouTube View Predictor API",
     description="""
