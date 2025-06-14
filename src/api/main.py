@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 
 from src.api.routes import health
+from src.api.routes import channels  # TODO: Import when ready
 # TODO: Import these as we build them
 # from src.api.routes import predictions, channels, metrics
 from src.config.settings import settings
@@ -158,6 +159,12 @@ app.include_router(
     health.router,
     prefix="/health",
     tags=["Health Check"]
+)
+
+app.include_router(
+    channels.router,
+    prefix="/channels",
+    tags=["YoutTube Channel Management"]
 )
 
 # TODO: Add these as we build them

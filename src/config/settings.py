@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     
     # YouTube API Configuration
-    youtube_api_key: str
+    youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "your_youtube_api_key_here")
     youtube_api_quota_limit: int = 10000  # Daily quota limit
     
     # MLflow Configuration

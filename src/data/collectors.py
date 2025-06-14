@@ -25,8 +25,8 @@ class YouTubeCollector:
     from YouTube channels and videos.
     """
     
+    # sets up yt api client with key either provided in constructor or from the one made in setting
     def __init__(self, api_key: Optional[str] = None):
-        """Initialize YouTube API client."""
         self.api_key = api_key or settings.youtube_api_key
         self.youtube = build('youtube', 'v3', developerKey=self.api_key)
         self.quota_used = 0
@@ -53,6 +53,7 @@ class YouTubeCollector:
                 id=channel_id
             ).execute()
             
+            # TODO: make sure this is thread safe
             self.quota_used += 1
             
             if not response.get('items'):
