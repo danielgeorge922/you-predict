@@ -1,0 +1,37 @@
+# Add patterns of files dvc should ignore, which could otherwise be staged/committed with dvc add
+
+# Temporary files
+
+\*_/_.tmp
+
+# Local development files
+
+**/\*.log
+**/.DS_Store
+
+# Jupyter notebook checkpoints
+
+**/.ipynb_checkpoints/**
+
+# Python cache
+
+**/**pycache**/**
+**/.pytest_cache/**
+**/.coverage
+**/.coverage.\*
+
+# Environments
+
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Editor specific
+
+.idea/
+.vscode/
+.history/
