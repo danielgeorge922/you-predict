@@ -1,11 +1,24 @@
+"""
+Configuration management for YouTube View Predictor.
+
+This module handles all configuration settings using Pydantic,
+which provides automatic validation and type checking.
+"""
+
 import os
 from typing import List, Optional
 from pydantic_settings import BaseSettings
 from pydantic import validator
 
-
 class Settings(BaseSettings):
-
+    """
+    Application settings with automatic validation.
+    
+    Pydantic automatically reads from environment variables,
+    validates types, and provides helpful error messages.
+    """
+    
+    # API Configuration
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     api_workers: int = 1
@@ -18,7 +31,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     
     # YouTube API Configuration
-    youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "your_youtube_api_key_here")
+    youtube_api_key: str
     youtube_api_quota_limit: int = 10000  # Daily quota limit
     
     # MLflow Configuration
@@ -44,8 +57,9 @@ class Settings(BaseSettings):
     @validator('youtube_api_key')
     def validate_youtube_api_key(cls, v):
         """Ensure YouTube API key is provided."""
-        if not v or v == "your_youtube_api_key_here":
-            raise ValueError("YouTube API key must be provided")
+        if not v or v == "placeholder_key":
+            # Don't fail validation, just warn
+            print("⚠️  YouTube API key not set - some features won't work")
         return v
     
     @validator('log_level')
@@ -67,7 +81,7 @@ class Settings(BaseSettings):
         """Pydantic configuration."""
         env_file = ".env"  # Automatically load from .env file
         case_sensitive = False  # Allow case-insensitive env vars
-        extra = "ignore"
+        extra = "allow"  # Allow extra fields in settings
 
 
 # Global settings instance

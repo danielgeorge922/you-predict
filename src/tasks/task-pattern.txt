@@ -1,0 +1,14 @@
+1. FastAPI receives request → "Make prediction for video XYZ"
+2. FastAPI puts task in Redis queue → "Hey workers, job available!"
+3. FastAPI returns immediately → "Your request is being processed"
+4. Celery worker picks up task → "I'll handle this job"
+5. Worker does the work → Calls YouTube API, runs ML model
+6. Worker stores result in Redis → "Job complete, here's the result"
+7. User can check result later → "Your prediction is ready!"
+
+[Video comes in] → [FastAPI] → [Redis Queue] → [Celery Worker] → [Result]
+     ↓              ↓            ↓              ↓              ↓
+  "Predict video"  Queue job    Store task     Do work      Store result
+     ↓              ↓            ↓              ↓              ↓  
+  Get response   "Processing"   Task waiting   30 seconds    "150K views"
+  immediately!
