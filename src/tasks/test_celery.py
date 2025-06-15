@@ -49,14 +49,10 @@ def test_postgresql_connection():
     """Test PostgreSQL connection and setup."""
     try:
         print("🔍 Testing PostgreSQL connection...")
-        from src.utils.database import health_check, create_tables, db_manager
-        
-        if health_check():
+        from src.utils.database import db_manager
+
+        if db_manager.health_check():
             print("✅ PostgreSQL connection successful")
-            
-            # Create tables
-            print("🏗️  Creating database tables...")
-            create_tables()
             
             # Verify tables exist
             counts = db_manager.get_table_counts()
@@ -142,6 +138,48 @@ def test_fastapi_server():
 
 
 def create_sample_data():
+    """Create some sample data for testing."""
+    try:
+        print("🔍 Creating sample data...")
+        from src.utils.database import get_db, Channel
+        from datetime import datetime
+        
+        db = next(get_db())
+        
+        # Check if sample channel already exists
+        existing_channel = db.query(Channel).filter(
+            Channel.channel_id == "SAMPLE_CHANNEL_001"
+        ).first()
+        
+        if not existing_channel:
+            # Create sample channel with correct fields
+            sample_channel = Channel(
+                channel_id="SAMPLE_CHANNEL_001",
+                channel_name="Sample Tech Channel",
+                subscriber_count=50000,
+                avg_views_last_30_days=5000,
+                avg_views_last_30_days_nonviral=4500,
+                avg_duration_last_30_days=600,
+                avg_urgency_score_last_30_days=0.3,
+                avg_velocity_last_30_days=100.0,
+                upload_frequency_per_week=2.5,
+                optimal_upload_hour=14,
+                baseline_last_updated=datetime.utcnow(),
+                data_quality_score=0.95
+            )
+            
+            db.add(sample_channel)
+            db.commit()
+            print("✅ Sample channel created")
+        else:
+            print("✅ Sample data already exists")
+        
+        db.close()
+        return True
+        
+    except Exception as e:
+        print(f"❌ Sample data creation failed: {e}")
+        return False
     """Create some sample data for testing."""
     try:
         print("🔍 Creating sample data...")
