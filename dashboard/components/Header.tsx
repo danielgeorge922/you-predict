@@ -4,13 +4,14 @@ import React from "react";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
 
   const routes = [
-    { label: "Inference Testing", href: "/inference-testing" },
+    { label: "Inference Visualization", href: "/inference-visualization" },
     { label: "Data Control", href: "/data-control" },
     { label: "Model Versioning", href: "/model-versioning" },
   ];
@@ -23,10 +24,19 @@ const Header = () => {
   return (
     <div className="flex-col">
       {/* Top White Half with the logo */}
-      <div>
-        <h1 className="text-[20px] text-gray-600 p-4 font-light w-full bg-white">
-          YouPredict
-        </h1>
+      <div className="flex justify-between p-4">
+        <div className="flex items-center">
+          <Image src="/logo.svg" alt="logo" width={40} height={40} />
+          <h1 className="ml-2 text-[20px] text-gray-600 font-light bg-white">
+            YouPredict
+          </h1>
+        </div>
+
+        {/* github link, with drop down for specific parts of repo (MLFlow, FrontEnd, anything else i wanna put on the right side) */}
+        <div className="gap-4 flex items-center">
+          <h1>github</h1>
+          <h1>github</h1>
+        </div>
       </div>
 
       {/* Bottom Red Half with the white tabs */}
@@ -57,10 +67,11 @@ const Header = () => {
                 },
                 textTransform: "none",
                 fontSize: "14px",
-                fontWeight: 400,
+                fontWeight: 600,
                 minHeight: "48px",
-                fontFamily:
-                  "Montserrat, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+                fontFamily: "DM Sans, sans-serif",
+                WebkitFontSmoothing: "antialiased",
+                MozOsxFontSmoothing: "grayscale",
               }}
             />
           ))}
