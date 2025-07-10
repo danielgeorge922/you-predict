@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "YouPredict",
   description: "MLOps Portfolio Project",
 };
-///////////////////////////
+
 // WITH BOTH SIDEBARS
 ///////////////////////////
 // export default function RootLayout({
@@ -51,7 +51,7 @@ export default function RootLayout({
 
           <div className="flex flex-1 overflow-hidden">
             {/* <Sidebar /> */}
-            <div className="flex-1 overflow-y-auto p-4">{children}</div>
+            <div className="flex-1 overflow-y-auto bg-gray-100">{children}</div>
             {/* <TinyRightSidebar /> */}
           </div>
         </main>
