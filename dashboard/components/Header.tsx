@@ -22,35 +22,40 @@ const Header = () => {
 
   const routes = [
     { label: "Inference Visualization", href: "/inference-visualization" },
-    { label: "Data Control", href: "/data-control" },
-    { label: "Model Versioning", href: "/model-versioning" },
+    { label: "Model Performance", href: "/model-performance" },
+    { label: "Model Monitoring", href: "/model-monitoring" },
   ];
 
   const currentTab = routes.findIndex((route) =>
     pathname.startsWith(route.href)
   );
-  const value = currentTab >= 0 ? currentTab : 0;
+  const value = currentTab >= 0 ? currentTab : false;
 
   const handleVersionSelect = (version: string) => {
     setSelectedVersion(version);
     setIsDropdownOpen(false);
   };
 
+  const isRetrainEnabled = selectedVersion !== "v1.2.3";
+
   return (
     <div className="flex-col">
       {/* Top White Half with the logo */}
       <div className="flex justify-between px-8 p-4">
-        <div className="flex items-center">
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center hover:cursor-pointer"
+        >
           <Image src="/logo.svg" alt="logo" width={40} height={40} />
-          <h1 className="ml-2 text-[20px] text-gray-600 font-light bg-white">
+          <h1 className="ml-2 text-[20px] text-gray-600 font-light bg-white hover:text-black transition-colors">
             YouPredict
           </h1>
-        </div>
+        </button>
 
         {/* github link and design docs */}
         <div className="gap-4 flex items-center">
           <a
-            href="https://github.com/yourusername/your-repo"
+            href="https://github.com/danielgeorge922/you-predict"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
@@ -73,7 +78,22 @@ const Header = () => {
             <span className="text-sm font-medium">Design Docs</span>
           </a>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {/* retrain model button */}
+          <button
+            disabled={!isRetrainEnabled}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors  text-sm font-medium ${
+              isRetrainEnabled
+                ? "bg-blue-100 text-blue-800 hover:bg-blue-200 hover:cursor-pointer"
+                : "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z" />
+            </svg>
+            <span>Retrain Model</span>
+          </button>
+
           {/* data versioning dropdown */}
           <div className="relative">
             <button
@@ -158,10 +178,11 @@ const Header = () => {
                 },
                 textTransform: "none",
                 fontSize: "14px",
-                fontWeight: 600,
+                fontWeight: 500,
                 minHeight: "48px",
                 WebkitFontSmoothing: "antialiased",
                 MozOsxFontSmoothing: "grayscale",
+                fontFamily: "Poppins, sans-serif",
               }}
             />
           ))}

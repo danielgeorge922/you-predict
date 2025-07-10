@@ -1,7 +1,7 @@
 const channels = [
   {
     id: 1,
-    name: "Marques Brownlee (MKBHD)",
+    name: "Marques Brownlee",
     pfp: "/Daniel.png",
     url: "/channel/mkbhd",
   },
