@@ -35,13 +35,13 @@ env/
 *.dvc
 
 # ML-specific
-.weights
-.pt
-.pth
-.h5
-.ckpt
-.pkl
-.joblib
+*.weights
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.pkl
+*.joblib
 
 # IDE specific files
 .idea/
@@ -51,12 +51,17 @@ env/
 
 # OS specific files
 .DS_Store
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
 
 # Logs
 logs/
 *.log
+
+# Node.js
+node_modules/
+
+package-lock.json
