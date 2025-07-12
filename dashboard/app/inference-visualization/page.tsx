@@ -5,7 +5,6 @@ import Image from "next/image";
 const page = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-12">
@@ -24,12 +23,12 @@ const page = () => {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-normal text-gray-900 mb-2">
+          <h2 className="text-3xl font-normal text-black mb-2">
             Choose a channel to get started
           </h2>
           <p className="text-gray-600 max-w-md mx-auto">
-            View AI-powered predictions for video performance and audience
-            engagement metrics
+            View AI-powered predictions for video virality
+    
           </p>
         </div>
 
@@ -39,39 +38,24 @@ const page = () => {
             <a
               key={channel.id}
               href={`/inference-visualization/${channel.id}`}
-              className="group bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200 hover:-translate-y-1"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:bg-blue-100 transition-colors duration-200"
             >
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <Image
                     src={channel.pfp}
                     alt={channel.name}
-                    className="w-16 h-16 rounded-full ring-2 ring-gray-100 group-hover:ring-blue-200 transition-all"
+                    className="w-16 h-16 rounded-full"
                     width={64}
                     height={64}
                   />
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                  
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-lg font-medium text-gray-900">
                     {channel.name}
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">View predictions</p>
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg
-                    className="w-5 h-5 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
                 </div>
               </div>
             </a>
