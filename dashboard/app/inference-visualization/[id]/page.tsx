@@ -2,6 +2,7 @@
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Image from "next/image";
 import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import channels from "@/consts/channels";
 import dummyVideoData from "@/consts/videos";
 import VideoCard, { VideoData } from "@/components/VideoCard";
@@ -45,6 +46,7 @@ const InferenceVisualizationPage = ({
 }) => {
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [filteredVideos, setFilteredVideos] = useState<VideoData[]>([]);
+  const router = useRouter();
 
   // Unwrap the params Promise
   const resolvedParams = use(params);
@@ -68,10 +70,11 @@ const InferenceVisualizationPage = ({
       {/* Header */}
       <div className="flex justify-between items-center w-full mb-8">
         <div className="flex items-center">
-          <button className="text-gray-600 hover:text-gray-800 hover:cursor-pointer transition-colors">
-            <h1 className="text-[20px]">
-              Channels
-            </h1>
+          <button
+            onClick={() => router.push("/inference-visualization")}
+            className="text-gray-400 hover:text-gray-800 hover:cursor-pointer transition-colors"
+          >
+            <h1 className="text-[20px]">Channels</h1>
           </button>
           <ArrowForwardIosIcon className="mx-2 text-black text-sm" />
           <div className="flex items-center">
@@ -82,9 +85,7 @@ const InferenceVisualizationPage = ({
               height={30}
               className="rounded-full mr-3"
             />
-            <span className="text-[20px]">
-              {channelData.name}
-            </span>
+            <span className="text-[20px]">{channelData.name}</span>
           </div>
         </div>
 
