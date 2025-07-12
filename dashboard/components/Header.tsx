@@ -46,7 +46,7 @@ const Header = () => {
           onClick={() => router.push("/")}
           className="flex items-center hover:cursor-pointer"
         >
-          <Image src="/logo.svg" alt="logo" width={40} height={40} />
+          <Image src="/Logo.svg" alt="logo" width={40} height={40} />
           <h1 className="ml-2 text-[20px] text-gray-600 transition-colors bg-white hover:text-black">
             YouPredict
           </h1>
