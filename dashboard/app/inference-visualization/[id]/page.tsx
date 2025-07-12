@@ -1,7 +1,7 @@
 "use client";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import channels from "@/consts/channels";
 import dummyVideoData from "@/consts/videos";
 import VideoCard, { VideoData } from "@/components/VideoCard";
@@ -38,19 +38,26 @@ const TimeFilter = () => {
   );
 };
 
-const InferenceVisualizationPage = ({ params }: { params: { id: string } }) => {
+const InferenceVisualizationPage = ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [filteredVideos, setFilteredVideos] = useState<VideoData[]>([]);
 
+  // Unwrap the params Promise
+  const resolvedParams = use(params);
+
   useEffect(() => {
-    const channelId = parseInt(params.id);
+    const channelId = parseInt(resolvedParams.id);
     const channel = channels.find((c) => c.id === channelId);
     setChannelData(channel || null);
     const channelVideos = dummyVideoData.filter(
       (video) => video.channel_id === channelId
-    ) as VideoData[]; // as video data does 
+    ) as VideoData[]; // assume that the type of the videos that we are sorting through is always type VideoData
     setFilteredVideos(channelVideos);
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   if (!channelData) {
     return <div className="p-8">Loading...</div>;
@@ -61,18 +68,21 @@ const InferenceVisualizationPage = ({ params }: { params: { id: string } }) => {
       {/* Header */}
       <div className="flex justify-between items-center w-full mb-8">
         <div className="flex items-center">
-          <button className="mr-4">
-            <ArrowBackIcon className="cursor-pointer text-blue-600 hover:text-blue-800" />
+          <button className="text-gray-600 hover:text-gray-800 hover:cursor-pointer transition-colors">
+            <h1 className="text-[20px]">
+              Channels
+            </h1>
           </button>
+          <ArrowForwardIosIcon className="mx-2 text-black text-sm" />
           <div className="flex items-center">
             <Image
               src={channelData.pfp}
               alt="Channel Logo"
-              width={40}
-              height={40}
-              className="rounded-full"
+              width={30}
+              height={30}
+              className="rounded-full mr-3"
             />
-            <span className="ml-3 font-semibold text-lg">
+            <span className="text-[20px]">
               {channelData.name}
             </span>
           </div>

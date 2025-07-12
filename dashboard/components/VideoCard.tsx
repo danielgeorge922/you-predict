@@ -62,6 +62,14 @@ const VideoCard = ({ video }: { video: VideoData }) => {
     return classification.charAt(0).toUpperCase() + classification.slice(1);
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden relative">
       {/* Prediction Badge */}
@@ -78,15 +86,19 @@ const VideoCard = ({ video }: { video: VideoData }) => {
         alt={video.title}
         width={video.thumbnail.width}
         height={video.thumbnail.height}
-        className="w-full h-48 object-cover"
+        className="w-full h-48 object-cover rounded-2xl"
       />
 
       <div className="p-4">
         <h3 className="text-md mb-2 line-clamp-2">{video.title}</h3>
         <div className="text-xs space-y-2">
-          <p className="text-gray-600">
-            Views: {formatViewCount(video.currentViewCount)}
-          </p>
+          {/* Views and Date Row */}
+          <div className="flex justify-between items-center">
+            <p className="text-gray-600">
+              {formatViewCount(video.currentViewCount)} Views
+            </p>
+            <p className="text-gray-600">{formatDate(video.uploadedAt)}</p>
+          </div>
 
           {/* Predicted Classification */}
           <div className="flex items-center gap-2">
@@ -117,10 +129,6 @@ const VideoCard = ({ video }: { video: VideoData }) => {
               Actual: Too recent to determine
             </p>
           )}
-
-          <p className="text-gray-600">
-            Uploaded: {new Date(video.uploadedAt).toLocaleDateString()}
-          </p>
         </div>
       </div>
     </div>

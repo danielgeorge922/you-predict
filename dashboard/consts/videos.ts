@@ -9,7 +9,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "mkbhd_002",
@@ -20,7 +24,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "mkbhd_003",
@@ -31,7 +39,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "viral",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "mkbhd_004",
@@ -42,7 +54,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "average",
     wasCorrect: 0,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "mkbhd_005",
@@ -53,7 +69,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "average",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
 
   // Linus Tech Tips (Channel 2)
@@ -66,7 +86,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/Daniel", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "ltt_002",
@@ -77,7 +101,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "ltt_003",
@@ -88,7 +116,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "viral",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "ltt_004",
@@ -99,7 +131,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "underperforming",
     wasCorrect: 0,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "ltt_005",
@@ -110,7 +146,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "average",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
 
   // Dave Lee (Channel 3)
@@ -123,7 +163,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "dave2d_002",
@@ -134,7 +178,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "dave2d_003",
@@ -145,7 +193,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "viral",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "dave2d_004",
@@ -156,7 +208,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "average",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "dave2d_005",
@@ -167,7 +223,11 @@ const dummyVideoData = [
     predictedClassification: "underperforming",
     actualClassification: "underperforming",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
 
   // Mrwhosetheboss (Channel 4)
@@ -180,7 +240,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "arun_002",
@@ -191,7 +255,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "arun_003",
@@ -202,7 +270,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "viral",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "arun_004",
@@ -213,7 +285,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "average",
     wasCorrect: 0,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "arun_005",
@@ -224,7 +300,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "average",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
 
   // ColdFusion (Channel 5)
@@ -237,7 +317,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "coldfusion_002",
@@ -248,7 +332,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "coldfusion_003",
@@ -259,7 +347,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "viral",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "coldfusion_004",
@@ -270,7 +362,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "average",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "coldfusion_005",
@@ -281,7 +377,11 @@ const dummyVideoData = [
     predictedClassification: "underperforming",
     actualClassification: "underperforming",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
 
   // Engadget (Channel 6)
@@ -294,7 +394,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "engadget_002",
@@ -305,7 +409,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: undefined,
     wasCorrect: 2,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "engadget_003",
@@ -316,7 +424,11 @@ const dummyVideoData = [
     predictedClassification: "viral",
     actualClassification: "viral",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "engadget_004",
@@ -327,7 +439,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "average",
     wasCorrect: 1,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
   {
     video_id: "engadget_005",
@@ -338,7 +454,11 @@ const dummyVideoData = [
     predictedClassification: "average",
     actualClassification: "underperforming",
     wasCorrect: 0,
-    thumbnail: { url: "/api/placeholder/320/180", width: 320, height: 180 },
+    thumbnail: {
+      url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      width: 320,
+      height: 180,
+    },
   },
 
   // ...existing code... (continue similar pattern for channels 7-15)

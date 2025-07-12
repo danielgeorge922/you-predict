@@ -11,7 +11,7 @@ const ChannelsSidebar = () => {
 
   return (
     <div className="bg-white border-r border-gray-200">
-      <h2 className="px-4 mt-4 text-3xl">Channels</h2>
+      <h2 className="px-4 mt-4 text-2xl">Channels</h2>
       <ul className="p-4">
         {channels.map((channel) => {
           const isActive = currentChannelId === channel.id.toString();
