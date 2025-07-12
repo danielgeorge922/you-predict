@@ -47,7 +47,7 @@ const Header = () => {
           className="flex items-center hover:cursor-pointer"
         >
           <Image src="/logo.svg" alt="logo" width={40} height={40} />
-          <h1 className="ml-2 text-[20px] text-gray-600 font-light bg-white hover:text-black transition-colors">
+          <h1 className="ml-2 text-[20px] text-gray-600 transition-colors bg-white hover:text-black">
             YouPredict
           </h1>
         </button>
@@ -129,7 +129,7 @@ const Header = () => {
                     onClick={() => handleVersionSelect(version.value)}
                     className={`w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg text-sm ${
                       selectedVersion === version.value
-                        ? "bg-gray-50 text-gray-900 font-medium"
+                        ? "bg-blue-100 text-blue-800 font-medium hover:bg-blue-200"
                         : "text-gray-700"
                     }`}
                   >
