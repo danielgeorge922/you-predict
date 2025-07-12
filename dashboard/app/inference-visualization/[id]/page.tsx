@@ -42,14 +42,14 @@ const TimeFilter = () => {
 const InferenceVisualizationPage = ({
   params,
 }: {
-  params: { id: string } | Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 }) => {
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [filteredVideos, setFilteredVideos] = useState<VideoData[]>([]);
   const router = useRouter();
 
-  // Handle both Promise and direct object params
-  const resolvedParams = params instanceof Promise ? use(params) : params;
+  // Use the React.use() hook to unwrap the Promise
+  const resolvedParams = use(params);
 
   useEffect(() => {
     const channelId = parseInt(resolvedParams.id);
