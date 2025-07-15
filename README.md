@@ -82,27 +82,6 @@ bashcp env.example .env
 ```
 
 3. **Start the infrastructure***
-bash```
+```
 docker-compose up -d
 ```
-
-Initialize the database
-bashpython src/tasks/test_db.py
-
-Set up YouTube channels for tracking
-bashpython -c "from src.data.channel_manager import setup_all_channels; setup_all_channels()"
-
-Start the services
-bash# API Server
-uvicorn src.api.main:app --reload
-
-# Celery Worker
-celery -A src.tasks.celery_app worker --loglevel=info
-
-# Celery Beat (Scheduler)
-celery -A src.tasks.celery_app beat --loglevel=info
-
-Launch the dashboard
-bashcd dashboard
-npm install
-npm run dev
