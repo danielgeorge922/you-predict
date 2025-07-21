@@ -2,6 +2,8 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-youpredict.danielgeorge922.com-blue?style=for-the-badge)](https://youpredict.danielgeorge922.com)
 
+<img width="1915" height="904" alt="image" src="https://github.com/user-attachments/assets/50d92153-c939-44d2-b5ea-ffe1da7f8e58" />
+
 A machine learning system that predicts YouTube video performance at upload time. Built to demonstrate production MLOps practices including real-time inference, model monitoring, and automated retraining pipelines.
 
 ## Overview
