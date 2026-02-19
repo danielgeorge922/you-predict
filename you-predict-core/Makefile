@@ -30,7 +30,14 @@ logs:
 logs-history:
 	gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=$(SERVICE)" --project=$(PROJECT) --limit=200 --order=desc --format="table(timestamp,httpRequest.status,httpRequest.requestUrl,textPayload)"
 
+seed-channels:
+	uv run python -m src.scripts.seed_tracked_channels
+
 subscribe:
+	uv run python -m src.scripts.subscribe_channels
+
+seed-and-subscribe:
+	uv run python -m src.scripts.seed_tracked_channels
 	uv run python -m src.scripts.subscribe_channels
 
 renew-scheduler:
@@ -39,4 +46,4 @@ renew-scheduler:
 bootstrap:
 	uv run python -m src.scripts.bootstrap_all
 
-.PHONY: dev test lint fmt typecheck deploy logs subscribe renew-scheduler bootstrap
+.PHONY: dev test lint fmt typecheck deploy logs seed-channels subscribe seed-and-subscribe renew-scheduler bootstrap
