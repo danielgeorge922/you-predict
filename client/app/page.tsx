@@ -14,7 +14,11 @@ const Page = () => {
   } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const openModal = (tech: { name: string; icon: string; description: string }) => {
+  const openModal = (tech: {
+    name: string;
+    icon: string;
+    description: string;
+  }) => {
     setSelectedTech(tech);
     setIsModalOpen(true);
   };
@@ -92,7 +96,9 @@ const Page = () => {
                   height={400}
                   className="w-full object-cover rounded-lg mb-4"
                 />
-                <p className="text-gray-600 text-[16px]">{section.description}</p>
+                <p className="text-gray-600 text-[16px]">
+                  {section.description}
+                </p>
               </div>
             ))}
           </div>
@@ -110,19 +116,28 @@ const Page = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-gray-800">Gradient Boosting Model (XGBoost) for viral prediction</span>
+                    <span className="text-gray-800">
+                      Gradient Boosting Model (XGBoost) for viral prediction
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-800">Real-time data pipeline with Apache Kafka streaming</span>
+                    <span className="text-gray-800">
+                      Real-time data pipeline with Apache Kafka streaming
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                    <span className="text-gray-800">Feature engineering from video metadata, engagement signals</span>
+                    <span className="text-gray-800">
+                      Feature engineering from video metadata, engagement
+                      signals
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                    <span className="text-gray-800">Continuous model retraining with drift detection</span>
+                    <span className="text-gray-800">
+                      Continuous model retraining with drift detection
+                    </span>
                   </div>
                 </div>
               </div>
@@ -136,7 +151,9 @@ const Page = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Training Framework:</span>
-                    <span className="text-gray-900 font-medium">XGBoost + Scikit-learn</span>
+                    <span className="text-gray-900 font-medium">
+                      XGBoost + Scikit-learn
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Model Accuracy:</span>
@@ -144,11 +161,15 @@ const Page = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Training Data:</span>
-                    <span className="text-gray-900 font-medium">2M+ YouTube videos</span>
+                    <span className="text-gray-900 font-medium">
+                      2M+ YouTube videos
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Feature Count:</span>
-                    <span className="text-gray-900 font-medium">127 engineered features</span>
+                    <span className="text-gray-900 font-medium">
+                      127 engineered features
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Inference Time:</span>
@@ -163,23 +184,33 @@ const Page = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Cloud Provider:</span>
-                    <span className="text-gray-900 font-medium">Google Cloud Platform</span>
+                    <span className="text-gray-900 font-medium">
+                      Google Cloud Platform
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Containerization:</span>
-                    <span className="text-gray-900 font-medium">Docker + Kubernetes</span>
+                    <span className="text-gray-900 font-medium">
+                      Docker + Kubernetes
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">API Gateway:</span>
-                    <span className="text-gray-900 font-medium">Cloud Endpoints</span>
+                    <span className="text-gray-900 font-medium">
+                      Cloud Endpoints
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Monitoring:</span>
-                    <span className="text-gray-900 font-medium">Prometheus + Grafana</span>
+                    <span className="text-gray-900 font-medium">
+                      Prometheus + Grafana
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-700">Auto-scaling:</span>
-                    <span className="text-green-600 font-medium">HPA enabled</span>
+                    <span className="text-green-600 font-medium">
+                      HPA enabled
+                    </span>
                   </div>
                 </div>
               </div>
