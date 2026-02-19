@@ -1,0 +1,41 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets — never in the image
+.env
+*.env
+
+# Dev tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Tests + notebooks (not needed at runtime)
+tests/
+*.ipynb
+.ipynb_checkpoints/
+
+# Git + editor
+.git/
+.gitignore
+.claude/
+pyrightconfig.json
+*.md
+README*
+
+# OS
+.DS_Store
+Thumbs.db

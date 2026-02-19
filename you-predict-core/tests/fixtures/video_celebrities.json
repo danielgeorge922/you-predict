@@ -1,0 +1,51 @@
+{
+  "kind": "youtube#video",
+  "etag": "lE7MuoNA0RP9sVLCld6t-wiXRoQ",
+  "id": "QJI0an6irrA",
+  "snippet": {
+    "publishedAt": "2026-01-07T20:00:09Z",
+    "channelId": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+    "title": "30 Celebrities Fight For $1,000,000!",
+    "description": "I was not prepared for how intense that ending was",
+    "thumbnails": {
+      "default": {"url": "https://i.ytimg.com/vi/QJI0an6irrA/default.jpg", "width": 120, "height": 90},
+      "medium": {"url": "https://i.ytimg.com/vi/QJI0an6irrA/mqdefault.jpg", "width": 320, "height": 180},
+      "high": {"url": "https://i.ytimg.com/vi/QJI0an6irrA/hqdefault.jpg", "width": 480, "height": 360},
+      "standard": {"url": "https://i.ytimg.com/vi/QJI0an6irrA/sddefault.jpg", "width": 640, "height": 480},
+      "maxres": {"url": "https://i.ytimg.com/vi/QJI0an6irrA/maxresdefault.jpg", "width": 1280, "height": 720}
+    },
+    "channelTitle": "MrBeast",
+    "categoryId": "24",
+    "liveBroadcastContent": "none",
+    "defaultLanguage": "en"
+  },
+  "contentDetails": {
+    "duration": "PT41M58S",
+    "dimension": "2d",
+    "definition": "hd",
+    "caption": "true",
+    "licensedContent": true,
+    "contentRating": {},
+    "projection": "rectangular"
+  },
+  "status": {
+    "uploadStatus": "processed",
+    "privacyStatus": "public",
+    "license": "youtube",
+    "embeddable": true,
+    "publicStatsViewable": true,
+    "madeForKids": false
+  },
+  "statistics": {
+    "viewCount": "82949853",
+    "likeCount": "2127007",
+    "favoriteCount": "0",
+    "commentCount": "95277"
+  },
+  "topicDetails": {
+    "topicCategories": [
+      "https://en.wikipedia.org/wiki/Entertainment",
+      "https://en.wikipedia.org/wiki/Television_program"
+    ]
+  }
+}

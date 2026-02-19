@@ -1,0 +1,29 @@
+@base_url = https://you-predict-core-2n75rmagqa-ue.a.run.app
+
+### Verify webhook endpoint (YouTube hub challenge)
+GET {{base_url}}/webhook?hub.challenge=testtoken
+
+### Simulate YouTube new video notification (Atom XML)
+POST {{base_url}}/webhook
+Content-Type: application/atom+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://www.youtube.com/xml/schemas/2015">
+  <entry>
+    <yt:videoId>TEST_VIDEO_ID</yt:videoId>
+    <yt:channelId>UC7ZUmtySp0bx2lw_1VGw3Yg</yt:channelId>
+    <published>2026-02-19T15:00:00+00:00</published>
+  </entry>
+</feed>
+
+### Trigger daily channel refresh pipeline
+POST {{base_url}}/pipelines/daily-channel-refresh
+
+### Trigger daily video refresh pipeline
+POST {{base_url}}/pipelines/daily-video-refresh
+
+### Trigger expire monitoring pipeline
+POST {{base_url}}/pipelines/expire-monitoring
+
+### Hit API docs
+GET {{base_url}}/docs

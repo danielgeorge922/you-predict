@@ -1,0 +1,70 @@
+[
+  {
+    "kind": "youtube#commentThread",
+    "etag": "abc123",
+    "id": "thread_001",
+    "snippet": {
+      "channelId": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "videoId": "QJI0an6irrA",
+      "topLevelComment": {
+        "kind": "youtube#comment",
+        "etag": "def456",
+        "id": "comment_001",
+        "snippet": {
+          "textDisplay": "This video is absolutely insane, I can't believe they did this!",
+          "authorDisplayName": "TopFan123",
+          "authorChannelId": {"value": "UCfan_channel_001"},
+          "likeCount": 342,
+          "publishedAt": "2026-01-08T10:00:00Z",
+          "updatedAt": "2026-01-08T10:00:00Z"
+        }
+      },
+      "canReply": true,
+      "totalReplyCount": 1,
+      "isPublic": true
+    },
+    "replies": {
+      "comments": [
+        {
+          "kind": "youtube#comment",
+          "etag": "ghi789",
+          "id": "comment_002",
+          "snippet": {
+            "textDisplay": "Agreed, totally wild ending!",
+            "authorDisplayName": "ReplyGuy99",
+            "authorChannelId": {"value": "UCfan_channel_002"},
+            "likeCount": 12,
+            "publishedAt": "2026-01-08T11:00:00Z",
+            "updatedAt": "2026-01-08T11:00:00Z"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "youtube#commentThread",
+    "etag": "xyz000",
+    "id": "thread_002",
+    "snippet": {
+      "channelId": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "videoId": "QJI0an6irrA",
+      "topLevelComment": {
+        "kind": "youtube#comment",
+        "etag": "xyz001",
+        "id": "comment_003",
+        "snippet": {
+          "textDisplay": "MrBeast never misses, legendary content",
+          "authorDisplayName": "BeastFan456",
+          "authorChannelId": {"value": "UCfan_channel_003"},
+          "likeCount": 89,
+          "publishedAt": "2026-01-08T12:00:00Z",
+          "updatedAt": "2026-01-08T12:00:00Z"
+        }
+      },
+      "canReply": true,
+      "totalReplyCount": 0,
+      "isPublic": true
+    },
+    "replies": null
+  }
+]

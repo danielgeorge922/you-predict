@@ -17,7 +17,8 @@ Raw Layer (bronze)                           Dim/Fact Layer (transformed from GC
 ├─ video_snapshot_stats/                     ├─ dim_category
 ├─ channel_snapshot_stats/                   ├─ dim_date
 ├─ video_comments/                           ├─ dim_video_transcript (optional)
-└─ video_transcripts/                        ├─ video_monitoring
+└─ video_transcripts/                        ├─ tracked_channels (seeded)
+                                             ├─ video_monitoring
                                              ├─ fact_video_snapshot
                                              ├─ fact_channel_snapshot
                                              └─ fact_comment
@@ -63,8 +64,8 @@ When a new video is discovered, Cloud Tasks are enqueued with staggered delivery
 - Comment pulls: 24, 72 hours after publish
 - Transcript fetch: ~24 hours after publish
 
-**3. Cloud Composer / Airflow DAGs (scheduled)**
-Daily pipelines for channel refreshes, video metadata refreshes, feature computation, mart rollups, and data quality checks. Each ingestion DAG writes raw data to GCS first, then triggers transforms.
+**3. Cloud Scheduler → Cloud Run pipeline endpoints (scheduled)**
+Daily pipelines for channel refreshes, video metadata refreshes, feature computation, mart rollups, and data quality checks. Cloud Scheduler sends HTTP POST to Cloud Run on a cron. Each pipeline writes raw data to GCS first, then triggers transforms.
 
 ---
 
@@ -74,10 +75,10 @@ Daily pipelines for channel refreshes, video metadata refreshes, feature computa
 
 | Prefix | Contents | Naming Convention | Frequency |
 |--------|----------|-------------------|-----------|
-| `channel_metadata/{channel_id}/` | Full `channels.list` API JSON (snippet, brandingSettings, topicDetails, statistics) | `{channel_id}_{iso_timestamp}.json` | Daily via Airflow (all tracked channels) |
-| `video_metadata/{video_id}/` | Full `videos.list` API JSON (snippet, contentDetails, status, topicDetails) | `{video_id}_{iso_timestamp}.json` | Daily at 12:00 UTC via Airflow (all active videos) |
+| `channel_metadata/{channel_id}/` | Full `channels.list` API JSON (snippet, brandingSettings, topicDetails, statistics) | `{channel_id}_{iso_timestamp}.json` | Daily via Cloud Scheduler pipeline (all tracked channels) |
+| `video_metadata/{video_id}/` | Full `videos.list` API JSON (snippet, contentDetails, status, topicDetails) | `{video_id}_{iso_timestamp}.json` | Daily at 12:00 UTC via Cloud Scheduler pipeline (all active videos) |
 | `video_snapshot_stats/{date}/` | `videos.list` statistics-only responses (snapshot polls) | `{video_id}_{iso_timestamp}.json` | Cloud Tasks fan-out: 1, 2, 4, 6, 8, 12, 16, 20, 24, 36, 48, 72 hours after publish |
-| `channel_snapshot_stats/{date}/` | `channels.list` statistics-only responses | `{channel_id}_{iso_timestamp}.json` | Daily via Airflow (same pass as channel_metadata/) |
+| `channel_snapshot_stats/{date}/` | `channels.list` statistics-only responses | `{channel_id}_{iso_timestamp}.json` | Daily via Cloud Scheduler pipeline (same pass as channel_metadata/) |
 | `video_comments/{video_id}/` | `commentThreads.list` API JSON | `{video_id}_{iso_timestamp}_{page}.json` | Cloud Tasks: 2 pulls per video at 24 and 72 hours after publish |
 | `video_transcripts/{video_id}/` | Raw transcript text via `youtube-transcript-api` | `{video_id}_{language}.txt` | Cloud Tasks: once per video, ~24 hours after publish |
 
@@ -113,7 +114,7 @@ Current-state channel metadata. Daily full refresh from `gs://you-predict-raw/ch
 | `updated_at` | `TIMESTAMP` | When this row was last refreshed |
 
 **Clustering:** `channel_id`
-**Write pattern:** DELETE + INSERT (full refresh). Daily.
+**Write pattern:** MERGE on `channel_id`. If matched, UPDATE all fields; if not matched, INSERT. Avoids the risk of an empty table if a DELETE+INSERT refresh fails partway through. Daily.
 
 ---
 
@@ -145,7 +146,7 @@ Current-state video metadata. Daily full refresh from `gs://you-predict-raw/vide
 | `updated_at` | `TIMESTAMP` | When this row was last refreshed |
 
 **Clustering:** `channel_id`, `video_id`
-**Write pattern:** DELETE + INSERT (full refresh). Daily at 12:00 UTC.
+**Write pattern:** MERGE on `video_id`. If matched, UPDATE all fields; if not matched, INSERT. Avoids the risk of an empty table if a DELETE+INSERT refresh fails partway through. Daily at 12:00 UTC.
 
 ---
 
@@ -201,11 +202,27 @@ Derived transcript features. Raw text lives in GCS. App works without this table
 | `readability_score` | `FLOAT64` | Flesch-Kincaid or similar |
 | `has_profanity` | `BOOL` | |
 
-**Write pattern:** INSERT once per video. Uses `youtube-transcript-api` (no API quota cost). All downstream features gate on availability.
+**Write pattern:** MERGE on `video_id`. Handles Cloud Tasks redelivery. Uses `youtube-transcript-api` (no API quota cost). All downstream features gate on availability.
 
 ---
 
 ## Tracking
+
+### `tracked_channels`
+
+Authoritative list of channels the system monitors. Seeded once via `seed_tracked_channels.py`. Read by `daily-channel-refresh` and `subscribe_channels.py`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `channel_id` | `STRING NOT NULL` | YouTube channel ID |
+| `added_at` | `TIMESTAMP NOT NULL` | When we started tracking |
+| `is_active` | `BOOL NOT NULL` | Set to FALSE to stop tracking without deleting |
+| `notes` | `STRING` | Optional label (e.g. "tech news", "gaming") |
+
+**Clustering:** `channel_id`
+**Write pattern:** MERGE on `channel_id`. Seed once; re-run to add channels or toggle `is_active`.
+
+---
 
 ### `video_monitoring`
 
@@ -260,7 +277,8 @@ Video-level metric snapshots with deltas and age tracking. Transformed from `gs:
 |---|---|---|
 | `snapshot_id` | `INT64 NOT NULL` | Auto-increment |
 | `snapshot_date` | `DATE NOT NULL` | Partition key |
-| `snapshot_ts` | `TIMESTAMP NOT NULL` | Exact snapshot time |
+| `snapshot_ts` | `TIMESTAMP NOT NULL` | Scheduled snapshot time |
+| `actual_captured_at` | `TIMESTAMP NOT NULL` | When the YouTube API was actually called (Cloud Tasks delivery may drift from schedule) |
 | `snapshot_type` | `STRING` | e.g. "1h", "2h", "4h", "24h" |
 | `video_id` | `STRING NOT NULL` | |
 | `channel_id` | `STRING NOT NULL` | |
@@ -270,12 +288,13 @@ Video-level metric snapshots with deltas and age tracking. Transformed from `gs:
 | `views_delta` | `INT64` | Change since last snapshot |
 | `likes_delta` | `INT64` | Change since last snapshot |
 | `comments_delta` | `INT64` | Change since last snapshot |
-| `hours_since_publish` | `INT64` | Video age at snapshot |
+| `hours_since_publish` | `INT64` | Nominal video age at snapshot (from snapshot_type) |
+| `actual_hours_since_publish` | `FLOAT64` | Actual video age based on `actual_captured_at - published_at`. Use this for ML features — more accurate than nominal interval. |
 | `days_since_publish` | `INT64` | Video age at snapshot |
 
 **Partitioned by:** `snapshot_date`
 **Clustering:** `video_id`, `channel_id`
-**Write pattern:** INSERT (append-only). 12 snapshots per video lifecycle (1h, 2h, 4h, 6h, 8h, 12h, 16h, 20h, 24h, 36h, 48h, 72h).
+**Write pattern:** MERGE on `(video_id, snapshot_type)`. Handles Cloud Tasks at-least-once delivery — if the same snapshot fires twice, the row is updated instead of duplicated. 12 snapshots per video lifecycle (1h, 2h, 4h, 6h, 8h, 12h, 16h, 20h, 24h, 36h, 48h, 72h).
 
 ---
 
@@ -314,7 +333,7 @@ Individual comments with sentiment and toxicity analysis. Transformed from `gs:/
 
 **Partitioned by:** `pull_date`
 **Clustering:** `video_id`, `channel_id`
-**Write pattern:** INSERT (append-only, dedup on comment_id). 2 pulls per video (24h, 72h).
+**Write pattern:** MERGE on `comment_id`. Handles duplicate pulls and Cloud Tasks redelivery — if the same comment is pulled twice, the row is updated with latest data. 2 pulls per video (24h, 72h).
 
 ---
 

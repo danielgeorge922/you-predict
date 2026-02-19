@@ -9,7 +9,7 @@ See `data_model.md` for complete table schemas, column definitions, partitioning
 - **Language:** Python 3.13+
 - **Package manager:** uv
 - **Server:** FastAPI + Uvicorn (deployed on Cloud Run)
-- **Orchestration:** Cloud Composer (managed Airflow) for scheduled pipelines
+- **Orchestration:** Cloud Scheduler (triggers Cloud Run pipeline endpoints on a cron)
 - **Fan-out:** Cloud Tasks for delayed snapshot/comment/transcript polling
 - **Data validation:** Pydantic v2
 - **Warehouse:** BigQuery
@@ -22,46 +22,48 @@ See `data_model.md` for complete table schemas, column definitions, partitioning
 
 ## Architecture
 
-The system has **two deployment targets** and **three trigger mechanisms**:
+The system has **one deployment target** (Cloud Run) and **three trigger mechanisms**:
 
 | Component | Deployed to | Handles |
 |-----------|-------------|---------|
-| FastAPI server | **Cloud Run** | Webhook (PubSubHubbub) + Cloud Tasks targets |
-| Airflow DAGs | **Cloud Composer** | All scheduled/periodic pipelines |
+| FastAPI server | **Cloud Run** | Webhook + Cloud Tasks targets + scheduled pipeline endpoints |
 
 ```
-                    ┌──────────────────────────┐
-                    │    Cloud Composer         │
-                    │    (Airflow DAGs)         │
-                    │                          │
-                    │  daily_channel_refresh    │
-                    │  daily_video_refresh      │
-                    │  compute_features        │
-                    │  compute_marts           │
-                    │  quality_checks          │
-                    │  expire_monitoring       │
-                    └────────────┬─────────────┘
-                                 │ imports
-┌────────────────────────────────┼────────────────────────────────┐
-│            Cloud Run (FastAPI) │                                │
-│                                │                                │
-│  ┌──────────────┐              │      ┌──────────────────┐     │
-│  │  Webhook      │              │      │  Task Handlers    │     │
-│  │  GET  /webhook│              │      │  POST /tasks/     │     │
-│  │  POST /webhook│              │      │    snapshot/      │     │
-│  └──────┬───────┘              │      │    comments/      │     │
-│         │                      │      │    transcript/    │     │
-│         ▼                      ▼      └────────┬─────────┘     │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                     engines/                             │   │
-│  │  transforms · features · ml · quality · discovery       │   │
-│  └──────────────────────┬──────────────────────────────────┘   │
-│                         ▼                                       │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                   data_sources/                          │   │
-│  │  youtube/ · gcs · bigquery                              │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────┐
+  │       Cloud Scheduler        │
+  │  (cron triggers via HTTP)    │
+  │                              │
+  │  daily_channel_refresh  0 0  │
+  │  daily_video_refresh   0 12  │
+  │  compute_features      0 13  │
+  │  compute_marts        30 13  │
+  │  quality_checks        0 14  │
+  │  expire_monitoring     0 1   │
+  └──────────────┬───────────────┘
+                 │ HTTP POST
+┌────────────────┼────────────────────────────────────────────┐
+│           Cloud Run (FastAPI)                               │
+│                │                                            │
+│  ┌─────────────┐  ┌───────────────┐  ┌────────────────┐   │
+│  │  Webhook     │  │ Task Handlers │  │  Pipelines     │   │
+│  │  GET  /wh    │  │ POST /tasks/  │  │  POST /pipe/   │   │
+│  │  POST /wh    │  │  snapshot/    │  │  channel-ref   │   │
+│  └──────┬──────┘  │  comments/    │  │  video-ref     │   │
+│         │         │  transcript/  │  │  features      │   │
+│         │         └───────┬───────┘  │  marts         │   │
+│         │                 │          │  quality        │   │
+│         │                 │          │  expire         │   │
+│         ▼                 ▼          └───────┬────────┘   │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │                     engines/                         │  │
+│  │  transforms · features · ml · quality · discovery   │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+│                         ▼                                  │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │                   data_sources/                      │  │
+│  │  youtube/ · gcs · bigquery                          │  │
+│  └─────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────┘
          │                   │                      │
          ▼                   ▼                      ▼
    ┌───────────┐      ┌───────────┐          ┌───────────┐
@@ -86,7 +88,8 @@ GET /webhook?hub.challenge=abc123
 ```
 POST /webhook (Atom XML body)
   → Parse XML: extract video_id, channel_id, published_at
-  → Insert into video_monitoring (engines/discovery.py)
+  → Idempotency check: if video_id already exists in video_monitoring, return 200 OK (skip duplicate)
+  → MERGE into video_monitoring (engines/discovery.py)
   → Enqueue Cloud Tasks (services/fanout.py):
       12 snapshot tasks at intervals [1, 2, 4, 6, 8, 12, 16, 20, 24, 36, 48, 72] hours
       2 comment pull tasks at [24, 72] hours
@@ -104,26 +107,27 @@ Intervals are plain integers representing hours after publish.
 POST /tasks/snapshot/{video_id}?interval=4
   → Fetch video stats from YouTube API (statistics-only, lightweight)
   → Store raw JSON in GCS (always first — raw data must be preserved before any processing)
-  → Transform → fact_video_snapshot (compute deltas, hours_since_publish)
+  → MERGE → fact_video_snapshot on (video_id, snapshot_type)
+    (handles Cloud Tasks at-least-once redelivery — duplicates update instead of creating extra rows)
 
 POST /tasks/comments/{video_id}
   → Fetch commentThreads from YouTube API (paginated)
   → Store raw JSON in GCS first
-  → Transform → fact_comment (dedup, sentiment, toxicity)
+  → MERGE → fact_comment on comment_id (handles duplicate pulls)
 
 POST /tasks/transcript/{video_id}
   → Fetch transcript via youtube-transcript-api (no API quota)
   → Store raw text in GCS first
-  → Transform → dim_video_transcript (word count, readability)
+  → MERGE → dim_video_transcript on video_id (handles redelivery)
 ```
 
-Cloud Tasks handles retries automatically on failure.
+Cloud Tasks handles retries automatically on failure. All task handlers are idempotent — redelivery produces the same result without duplicate rows.
 
-### 3. Scheduled Pipelines — Cloud Composer (Airflow)
+### 3. Scheduled Pipelines — Cloud Scheduler
 
-All regularly-running jobs are defined as Airflow DAGs in `dags/`. DAGs import from `src/engines/` and `src/data_sources/` to do the actual work. Airflow handles scheduling, retries, dependency management, monitoring, and backfills.
+All regularly-running jobs are triggered by Cloud Scheduler, which sends HTTP POST requests to pipeline endpoints on the same Cloud Run service. Pipeline logic lives in `engines/` — the route handlers in `services/pipelines.py` are thin wrappers that invoke engine functions.
 
-**Critical ordering within each DAG:** Raw data is ALWAYS saved to GCS before any processing or transformation begins. GCS is the source of truth — if a transform fails, we still have the raw data and can reprocess later. A pipeline must never reach a state where processing failed and the raw data wasn't persisted.
+**Critical ordering within each pipeline:** Raw data is ALWAYS saved to GCS before any processing or transformation begins. GCS is the source of truth — if a transform fails, we still have the raw data and can reprocess later. A pipeline must never reach a state where processing failed and the raw data wasn't persisted.
 
 ```
 Ingest from YouTube API
@@ -131,16 +135,16 @@ Ingest from YouTube API
   → THEN transform GCS → BigQuery  ← This can fail and be retried from GCS
 ```
 
-| DAG | Schedule | What it does |
-|-----|----------|-------------|
-| `daily_channel_refresh` | Daily 00:00 UTC | Ingest all tracked channels → GCS → dim_channel + fact_channel_snapshot |
-| `daily_video_refresh` | Daily 12:00 UTC | Ingest active video metadata → GCS → dim_video |
-| `compute_features` | Daily 13:00 UTC | Run feature SQL with dependency ordering (see below) |
-| `compute_marts` | Daily 13:30 UTC | Run mart SQL: video_summary, channel_daily |
-| `quality_checks` | Daily 14:00 UTC | Run DQ checks on all tables → data_quality_results |
-| `expire_monitoring` | Daily 01:00 UTC | Deactivate videos past their monitoring window |
+| Endpoint | Cron (UTC) | What it does |
+|----------|------------|-------------|
+| `POST /pipelines/daily-channel-refresh` | `0 0 * * *` | Ingest all tracked channels → GCS → dim_channel + fact_channel_snapshot |
+| `POST /pipelines/daily-video-refresh` | `0 12 * * *` | Ingest active video metadata → GCS → dim_video |
+| `POST /pipelines/compute-features` | `0 13 * * *` | Run feature SQL with dependency ordering (see below) |
+| `POST /pipelines/compute-marts` | `30 13 * * *` | Run mart SQL: video_summary, channel_daily |
+| `POST /pipelines/quality-checks` | `0 14 * * *` | Run DQ checks on all tables → data_quality_results |
+| `POST /pipelines/expire-monitoring` | `0 1 * * *` | Deactivate videos past their monitoring window |
 
-Feature dependency chain enforced by Airflow task ordering:
+Feature dependency chain enforced by execution order within the `compute-features` handler:
 ```
 ml_feature_channel (daily, independent)
   → ml_feature_video_performance (depends on channel features for performance_vs_channel_avg)
@@ -159,14 +163,6 @@ you-predict-core/
 ├── Dockerfile                        ← Cloud Run deployment
 ├── .env.example                      ← Required environment variables template
 ├── main.py                           ← FastAPI app entrypoint
-│
-├── dags/                             ── Airflow DAGs (deployed to Cloud Composer)
-│   ├── daily_channel_refresh.py         Ingest channels → GCS → BQ
-│   ├── daily_video_refresh.py           Ingest video metadata → GCS → BQ
-│   ├── compute_features.py              Run feature SQL with dependency ordering
-│   ├── compute_marts.py                 Run mart SQL
-│   ├── quality_checks.py                Run DQ checks
-│   └── expire_monitoring.py             Deactivate expired video_monitoring entries
 │
 ├── src/
 │   ├── config/                       ── Settings, constants, GCP client factories
@@ -222,12 +218,15 @@ you-predict-core/
 │   ├── services/                     ── FastAPI routes (Cloud Run HTTP surface only)
 │   │   ├── webhook.py                   PubSubHubbub GET (challenge) + POST (notification)
 │   │   ├── fanout.py                    Enqueue Cloud Tasks with delayed delivery
-│   │   └── snapshot_handler.py          Endpoints Cloud Tasks hits (snapshots, comments, transcripts)
+│   │   ├── snapshot_handler.py          Endpoints Cloud Tasks hits (snapshots, comments, transcripts)
+│   │   └── pipelines.py                 Scheduled pipeline endpoints (triggered by Cloud Scheduler)
 │   │
 │   ├── scripts/                      ── Bootstrap, seed, and ad-hoc scripts
-│   │   ├── bootstrap_infra.py           Create GCS buckets, BQ dataset, Cloud Tasks queue
-│   │   ├── bootstrap_tables.py          Create all BQ tables idempotently from schemas
-│   │   ├── seed_categories.py           Populate dim_category (~30 YouTube categories)
+│   │   ├── bootstrap_all.py             Run all bootstrap + seed steps in order
+│   │   ├── bootstrap_gcs.py             Create GCS buckets (raw + models)
+│   │   ├── bootstrap_bigquery.py        Create BQ dataset + all tables from schemas
+│   │   ├── bootstrap_cloud_tasks.py     Create Cloud Tasks queue
+│   │   ├── seed_categories.py           Populate dim_category (~32 YouTube categories)
 │   │   ├── seed_dates.py                Populate dim_date (2026-2028)
 │   │   ├── subscribe_channels.py        Subscribe to PubSubHubbub for all tracked channels
 │   │   └── backfill.py                  Replay GCS raw data → rebuild BQ tables
@@ -268,14 +267,13 @@ you-predict-core/
 Code imports only flow downward. Never import upward.
 
 ```
-dags/              → engines/       (Airflow DAGs invoke engine functions)
 services/          → engines/       (FastAPI routes invoke engine functions)
                      engines/       → data_sources/    → config/
                                     → models/          → config/
 utils/             (leaf — imported by anyone, imports nothing from src)
 ```
 
-- **dags/** and **services/** are both entry points — they call into `engines/` but never into each other
+- **services/** is the sole entry point — webhook, task handlers, and pipeline routes all call into `engines/`
 - **engines/** does all the actual work (transforms, features, ML, quality)
 - **data_sources/** handles all external I/O (YouTube API, GCS, BigQuery)
 - **models/** defines Pydantic data contracts for every boundary
@@ -321,7 +319,7 @@ YouTube API / PubSubHubbub
 ## Key Invariants
 
 - **GCS is the source of truth.** Raw data is always written to GCS before any processing. Everything in BigQuery from dim/fact onward is recomputable by replaying raw GCS blobs (`scripts/backfill.py`). If a transform fails, the raw data is still safe in GCS.
-- **No SCD2.** Dimensions are current-state only (daily full refresh). Historical state can be recovered from GCS snapshots.
+- **No SCD2.** Dimensions are current-state only (daily MERGE refresh). Historical state can be recovered from GCS snapshots.
 - **Append-only raw layer.** GCS blobs are never overwritten or deleted.
 - **Pydantic at every boundary.** API responses, GCS blobs, and BQ rows all pass through Pydantic models for validation.
 - **SQL stays as SQL.** Feature and mart computations live in `src/sql/` as `.sql` files, not Python strings. Parameterized with `{project}` and `{dataset}` at execution time.
@@ -329,33 +327,28 @@ YouTube API / PubSubHubbub
 
 ## Bootstrap (Setting Up From Scratch)
 
-Scripts in `src/scripts/` create all required infrastructure and seed data. Run them in order:
+Scripts in `src/scripts/` create all required infrastructure and seed data. Run everything at once or individually:
 
 ```bash
-# 1. Create GCS buckets, BigQuery dataset, Cloud Tasks queue
-python -m src.scripts.bootstrap_infra
+# All-in-one (runs steps 1-5 in order):
+uv run python -m src.scripts.bootstrap_all
 
-# 2. Create all BigQuery tables (idempotent — safe to re-run)
-python -m src.scripts.bootstrap_tables
+# Or run individually:
+uv run python -m src.scripts.bootstrap_gcs           # 1. GCS buckets
+uv run python -m src.scripts.bootstrap_bigquery       # 2. BQ dataset + all 21 tables
+uv run python -m src.scripts.bootstrap_cloud_tasks    # 3. Cloud Tasks queue
+uv run python -m src.scripts.seed_categories          # 4. ~32 YouTube categories
+uv run python -m src.scripts.seed_dates               # 5. 2026-2028 calendar
 
-# 3. Seed static dimension tables
-python -m src.scripts.seed_categories    # ~30 YouTube categories
-python -m src.scripts.seed_dates         # 2026-2028 calendar
-
-# 4. Subscribe to PubSubHubbub for tracked channels
-python -m src.scripts.subscribe_channels
+# Later (after Cloud Run is deployed):
+uv run python -m src.scripts.subscribe_channels       # Subscribe to PubSubHubbub
 
 # If you need to rebuild BQ from existing GCS data:
-python -m src.scripts.backfill --date 2026-02-15
+uv run python -m src.scripts.backfill --date 2026-02-15
 ```
 
-`bootstrap_infra.py` creates:
-- GCS bucket: `gs://you-predict-raw/`
-- GCS bucket: `gs://you-predict-models/`
-- BigQuery dataset: `you_predict_warehouse` (US region)
-- Cloud Tasks queue: `snapshot-fanout` (in configured region)
-
 All bootstrap scripts are idempotent — safe to run multiple times without side effects.
+Seed scripts (categories, dates) wipe and re-insert for a clean reset.
 
 ## Environment Variables
 
@@ -383,15 +376,15 @@ uv sync
 uv sync --group dev
 
 # Run server locally
-uvicorn main:app --reload
+uv run uvicorn main:app --reload
 
 # Run tests
-pytest tests/
+uv run pytest tests/
 
 # Lint + format
-ruff check src/ tests/
-ruff format src/ tests/
+uv run ruff check src/ tests/
+uv run ruff format src/ tests/
 
 # Type check
-mypy src/
+uv run mypy src/
 ```
