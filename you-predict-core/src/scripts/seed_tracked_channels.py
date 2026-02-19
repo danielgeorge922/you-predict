@@ -32,6 +32,7 @@ TRACKED_CHANNELS: list[tuple[str, str]] = [
     ("UCp-9VZEYKho8zI7IFmmlX3Q", ""),
     ("UCAuk798iHprjTtwlClkFxMA", ""),
     ("UCr-GHkKLpT9DgBXHQXI2WAw", "EpicRoberto"),  # me aka the goat
+    ("UC9o13aexcHFSok7VYZ24EaQ", ""),
 ]
 
 
