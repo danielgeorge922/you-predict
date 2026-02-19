@@ -12,6 +12,8 @@ build/
 # Environment
 .env
 
+you_predict.ipynb
+
 # Type checking / linting
 .mypy_cache/
 .ruff_cache/
