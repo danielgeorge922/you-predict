@@ -82,4 +82,10 @@ class BigQueryService:
         merged = {"project": self._project_id, "dataset": self._dataset}
         if params:
             merged.update(params)
-        return sql.format(**merged)
+        # Use explicit replace instead of .format() so that curly braces in
+        # user data (channel descriptions, keywords, etc.) don't get treated
+        # as format placeholders and raise KeyError.
+        result = sql
+        for key, value in merged.items():
+            result = result.replace(f"{{{key}}}", value)
+        return result
