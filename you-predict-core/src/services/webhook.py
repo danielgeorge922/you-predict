@@ -79,6 +79,10 @@ async def webhook_notify(request: Request) -> Response:
     bq = BigQueryService(get_bq_client(), settings.gcp_project_id, settings.bq_dataset)
     engine = DiscoveryEngine(bq, settings.monitoring_window_hours)
 
+    if engine.is_video_registered(video_id):
+        logger.info("Duplicate webhook for video %s — already registered, skipping", video_id)
+        return Response(status_code=200)
+
     is_new = engine.register_video(video_id, channel_id, published_at)
     if not is_new:
         logger.info("Duplicate webhook for video %s — skipping fanout", video_id)
