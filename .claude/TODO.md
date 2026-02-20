@@ -134,3 +134,91 @@
 - [x] `mypy src/` passes clean (50 source files)
 - [ ] Tests for services (`test_webhook`, `test_snapshot_handler`, `test_pipelines`)
 - [ ] Write README with setup instructions
+
+---
+
+## Production Bug Learnings (2026-02-20)
+
+Three bugs were found and fixed while diagnosing HTTP 500s on Cloud Scheduler jobs. All three were silent in local tests because they only trigger with real-world user content.
+
+### Bug 1 — Python `str.format()` explodes on user content with curly braces
+
+**File:** `src/data_sources/bigquery.py` → `_format_sql()`
+
+**What happened:** `sql.format(**merged)` treats any `{word}` in the SQL string as a Python format placeholder. Channel descriptions, video descriptions, and comment text commonly contain things like `{1:23}` (YouTube timestamps), `{link}`, `{music}` — all raise `KeyError`.
+
+**Fix:** Replace with an explicit loop:
+```python
+result = sql
+for key, value in merged.items():
+    result = result.replace(f"{{{key}}}", value)
+return result
+```
+
+**Rule:** Never use `str.format()` when the string being formatted may contain arbitrary user content. Use explicit `.replace()` or parameterized queries.
+
+---
+
+### Bug 2 — Newlines in user text create unclosed string literals in BigQuery SQL
+
+**Files:** `_esc()` / `_sql_str()` in `channels.py`, `videos.py`, `comments.py`
+
+**What happened:** The escape helper only handled single quotes and backslashes, but not `\n` or `\r`. Channel descriptions, video titles, and comment text often span multiple lines. When embedded into a SQL string literal like `'...\n...'`, BigQuery sees a literal newline inside a string and rejects it with:
+```
+400 Syntax error: Unclosed string literal at [3:113]
+```
+
+**Fix:** Add newline escaping to every `_esc` function:
+```python
+def _esc(value: str) -> str:
+    return (value
+        .replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r"))
+```
+
+**Rule:** Any time you embed user-generated text into a SQL string literal, you must escape: backslashes first, then single quotes, then newlines (`\n`), then carriage returns (`\r`). The order matters — escape backslashes before adding new backslashes for other escapes.
+
+**Tests added:** 18 new edge-case tests across `test_transforms_channels.py`, `test_transforms_videos.py`, `test_transforms_comments.py` verifying `\n`, `\r\n`, `'`, `\`, and combinations all round-trip correctly through the SQL.
+
+---
+
+### Bug 3 — Untyped `NULL` in BigQuery MERGE source is inferred as INT64, not BOOL
+
+**Files:** `_sql_bool()` in `channels.py`, `videos.py`, `comments.py`
+
+**What happened:** `_sql_bool(None)` returned bare `"NULL"`. In a BigQuery MERGE `SELECT NULL AS is_age_restricted`, BigQuery infers the type as INT64 (its default for untyped NULL). When that gets assigned to a BOOL column, it fails:
+```
+Value of type INT64 cannot be assigned to is_age_restricted, which has type BOOL
+```
+The specific trigger was `is_age_restricted=None` hardcoded in `videos.py` (not yet parsed from the API) — this hit every single video row.
+
+**Fix:** Explicit cast, matching the existing `_sql_ts` pattern:
+```python
+def _sql_bool(value: bool | None) -> str:
+    if value is None:
+        return "CAST(NULL AS BOOL)"
+    return "TRUE" if value else "FALSE"
+```
+
+**Rule:** In dynamically-generated BigQuery SQL, never use bare `NULL` for typed columns. Always use `CAST(NULL AS TYPE)`. This already existed for TIMESTAMP (`CAST(NULL AS TIMESTAMP)`) — BOOL needed the same treatment.
+
+**Affected fields:** `is_age_restricted`, `is_livestream`, `made_for_kids`, `has_custom_thumbnail`, `caption_available`, `licensed_content`, `has_paid_promotion` (videos); `made_for_kids`, `hidden_subscriber_count` (channels); `is_reply` (comments).
+
+---
+
+### Debugging workflow: Cloud Scheduler 500s
+
+- Cloud Scheduler logs only show HTTP status codes — the actual Python traceback is in **Cloud Run logs**
+- Filter Cloud Run logs by `severity=ERROR` and time window to find the right trace
+- `gcloud scheduler jobs run` is broken on Windows (gcloud bundled Python path issue) — use **GCP Console → Force Run** instead
+- Three bugs in the same class of code (SQL string builders) caused three sequential `gcloud run deploy` → still broken cycles before the root cause chain was fully cleared
+
+---
+
+### GCP housekeeping: Artifact Registry
+
+- `gcloud run deploy --source .` auto-pushes images to a repo called `cloud-run-source-deploy` (not the manually created `you-predict-core-repo`)
+- `gcf-artifacts` is auto-created by Cloud Functions deployments — safe to delete if Cloud Functions are gone
+- Old Cloud Functions (`youtube-comments`, `youtube-daily-snapshots`, `youtube-discovery`, `youtube-snapshot`) were from a previous microservices attempt — confirmed deleted
