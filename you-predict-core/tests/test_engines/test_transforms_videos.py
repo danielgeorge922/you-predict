@@ -1,5 +1,6 @@
 """Tests for VideoTransformer using real YouTube API response data."""
 
+import copy
 from unittest.mock import MagicMock
 
 from src.engines.transforms.base import TransformResult
@@ -160,3 +161,62 @@ class TestVideoTransformerFull:
         sql = mock_bq.run_merge.call_args[0][0]
         assert "QJI0an6irrA" in sql
         assert "ZFoNBxpXen4" in sql
+
+
+class TestVideoSqlEscaping:
+    """SQL escaping edge cases — newlines, quotes, backslashes in video text fields.
+
+    These verify the fix for 'Unclosed string literal' BigQuery errors caused by
+    literal newlines and other special characters in titles/descriptions being
+    embedded unescaped into MERGE SQL strings.
+    """
+
+    def _sql(self, video_item: dict, mock_bq: MagicMock) -> str:
+        transformer = VideoTransformer(mock_bq)
+        transformer.transform([video_item])
+        return mock_bq.run_merge.call_args[0][0]
+
+    def test_newline_in_title_is_escaped(self, video_item_celebrities, mock_bq):
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["title"] = "First Line\nSecond Line"
+        sql = self._sql(item, mock_bq)
+        assert "First Line\\nSecond Line" in sql
+        assert "First Line\nSecond Line" not in sql  # raw newline must not appear
+
+    def test_newline_in_description_is_escaped(self, video_item_celebrities, mock_bq):
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["description"] = "Watch now!\nSubscribe below."
+        sql = self._sql(item, mock_bq)
+        assert "Watch now!\\nSubscribe below." in sql
+
+    def test_carriage_return_in_description_is_escaped(self, video_item_celebrities, mock_bq):
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["description"] = "Line A\r\nLine B"
+        sql = self._sql(item, mock_bq)
+        assert "Line A\\r\\nLine B" in sql
+        assert "Line A\r\nLine B" not in sql
+
+    def test_single_quote_in_title_is_escaped(self, video_item_celebrities, mock_bq):
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["title"] = "World's Biggest Challenge"
+        sql = self._sql(item, mock_bq)
+        assert "World\\'s Biggest Challenge" in sql
+
+    def test_backslash_in_description_is_escaped(self, video_item_celebrities, mock_bq):
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["description"] = "Path: C:\\Users\\MrBeast"
+        sql = self._sql(item, mock_bq)
+        assert "Path: C:\\\\Users\\\\MrBeast" in sql
+
+    def test_single_quote_in_tag_is_escaped(self, video_item_celebrities, mock_bq):
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["tags"] = ["it's viral"]
+        sql = self._sql(item, mock_bq)
+        assert "it\\'s viral" in sql
+
+    def test_combination_in_description(self, video_item_celebrities, mock_bq):
+        # Realistic description: timestamps + links + apostrophe
+        item = copy.deepcopy(video_item_celebrities)
+        item["snippet"]["description"] = "Don't miss it!\nTimestamps:\n0:00 Intro"
+        sql = self._sql(item, mock_bq)
+        assert "Don\\'t miss it!\\nTimestamps:\\n0:00 Intro" in sql

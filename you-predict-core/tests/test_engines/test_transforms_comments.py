@@ -1,5 +1,6 @@
 """Tests for CommentTransformer using real YouTube comment thread data."""
 
+import copy
 from datetime import UTC, datetime
 
 from src.engines.transforms.base import TransformResult
@@ -156,3 +157,64 @@ class TestCommentTransformerFull:
         )
         assert result.rows_written == 0
         mock_bq.run_merge.assert_not_called()
+
+
+class TestCommentSqlEscaping:
+    """SQL escaping edge cases — newlines, quotes, backslashes in comment text.
+
+    These verify the fix for 'Unclosed string literal' BigQuery errors caused by
+    literal newlines and special characters in comment_text / commenter_name being
+    embedded unescaped into MERGE SQL strings. Comments are especially high-risk
+    since they contain arbitrary user-generated text.
+    """
+
+    def _sql(self, comment_threads: list[dict], mock_bq) -> str:
+        transformer = CommentTransformer(mock_bq)
+        transformer.transform(
+            raw_items=comment_threads,
+            video_id=_VIDEO_ID,
+            channel_id=_CHANNEL_ID,
+            pulled_at=_PULLED_AT,
+        )
+        return mock_bq.run_merge.call_args[0][0]
+
+    def _with_comment_text(self, comment_threads: list[dict], text: str) -> list[dict]:
+        threads = copy.deepcopy(comment_threads)
+        threads[0]["snippet"]["topLevelComment"]["snippet"]["textDisplay"] = text
+        return threads
+
+    def test_newline_in_comment_text_is_escaped(self, comment_threads, mock_bq):
+        threads = self._with_comment_text(comment_threads, "this is\nso crazy")
+        sql = self._sql(threads, mock_bq)
+        assert "this is\\nso crazy" in sql
+        assert "this is\nso crazy" not in sql  # raw newline must not appear
+
+    def test_carriage_return_in_comment_text_is_escaped(self, comment_threads, mock_bq):
+        threads = self._with_comment_text(comment_threads, "line one\r\nline two")
+        sql = self._sql(threads, mock_bq)
+        assert "line one\\r\\nline two" in sql
+        assert "line one\r\nline two" not in sql
+
+    def test_single_quote_in_comment_text_is_escaped(self, comment_threads, mock_bq):
+        threads = self._with_comment_text(comment_threads, "I can't believe it")
+        sql = self._sql(threads, mock_bq)
+        assert "I can\\'t believe it" in sql
+
+    def test_backslash_in_comment_text_is_escaped(self, comment_threads, mock_bq):
+        threads = self._with_comment_text(comment_threads, "path\\to\\file")
+        sql = self._sql(threads, mock_bq)
+        assert "path\\\\to\\\\file" in sql
+
+    def test_single_quote_in_commenter_name_is_escaped(self, comment_threads, mock_bq):
+        threads = copy.deepcopy(comment_threads)
+        threads[0]["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"] = "O'Brien"
+        sql = self._sql(threads, mock_bq)
+        assert "O\\'Brien" in sql
+
+    def test_combination_in_comment_text(self, comment_threads, mock_bq):
+        # Realistic: emoji-laden comment with apostrophe, newline, timestamp
+        threads = self._with_comment_text(
+            comment_threads, "don't skip!\nwatch at 1:23\nit's insane"
+        )
+        sql = self._sql(threads, mock_bq)
+        assert "don\\'t skip!\\nwatch at 1:23\\nit\\'s insane" in sql

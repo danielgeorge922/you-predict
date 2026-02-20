@@ -1,5 +1,6 @@
 """Tests for ChannelTransformer using real MrBeast API response data."""
 
+import copy
 from unittest.mock import MagicMock
 
 from src.engines.transforms.base import TransformResult
@@ -172,3 +173,52 @@ class TestChannelTransformerFull:
         results = transformer.transform([])
         assert results == []
         mock_bq.run_merge.assert_not_called()
+
+
+class TestChannelSqlEscaping:
+    """SQL escaping edge cases — newlines, quotes, backslashes in channel text fields.
+
+    These verify the bug fix for 'Unclosed string literal' BigQuery errors
+    caused by literal newlines and other special characters in channel descriptions
+    being embedded unescaped into MERGE SQL strings.
+    """
+
+    def _sql_for_dim_channel(self, channel_item: dict, mock_bq: MagicMock) -> str:
+        """Transform and return the dim_channel MERGE SQL (first run_merge call)."""
+        transformer = ChannelTransformer(mock_bq)
+        transformer.transform([channel_item])
+        # First call = _merge_dim_channels
+        return mock_bq.run_merge.call_args_list[0][0][0]
+
+    def test_newline_in_description_is_escaped(self, channel_item, mock_bq):
+        item = copy.deepcopy(channel_item)
+        item["snippet"]["description"] = "Line one\nLine two"
+        sql = self._sql_for_dim_channel(item, mock_bq)
+        assert "Line one\\nLine two" in sql
+        assert "Line one\nLine two" not in sql  # raw newline must not appear
+
+    def test_carriage_return_in_description_is_escaped(self, channel_item, mock_bq):
+        item = copy.deepcopy(channel_item)
+        item["snippet"]["description"] = "Windows\r\nStyle"
+        sql = self._sql_for_dim_channel(item, mock_bq)
+        assert "Windows\\r\\nStyle" in sql
+        assert "Windows\r\nStyle" not in sql
+
+    def test_single_quote_in_channel_name_is_escaped(self, channel_item, mock_bq):
+        item = copy.deepcopy(channel_item)
+        item["snippet"]["title"] = "Daniel's Channel"
+        sql = self._sql_for_dim_channel(item, mock_bq)
+        assert "Daniel\\'s Channel" in sql
+
+    def test_backslash_in_channel_keywords_is_escaped(self, channel_item, mock_bq):
+        item = copy.deepcopy(channel_item)
+        item["brandingSettings"]["channel"]["keywords"] = "tech\\gear"
+        sql = self._sql_for_dim_channel(item, mock_bq)
+        assert "tech\\\\gear" in sql
+
+    def test_combination_of_special_chars_in_description(self, channel_item, mock_bq):
+        # Realistic description: apostrophe + newline + backslash
+        item = copy.deepcopy(channel_item)
+        item["snippet"]["description"] = "Jimmy's channel\nCheck out C:\\stuff"
+        sql = self._sql_for_dim_channel(item, mock_bq)
+        assert "Jimmy\\'s channel\\nCheck out C:\\\\stuff" in sql
