@@ -2,9 +2,6 @@
 
 Each endpoint is a thin wrapper that calls engine functions. The heavy logic
 lives in engines/; these routes just wire settings, services, and engines.
-
-Phases 7+ (features, marts, quality) are stubbed — they return 200 and log
-a message until the SQL and engine code is written.
 """
 
 import logging
@@ -16,6 +13,8 @@ from src.data_sources.bigquery import BigQueryService
 from src.data_sources.gcs import GCSService
 from src.data_sources.gcs_paths import GCSPathBuilder
 from src.engines.discovery import DiscoveryEngine
+from src.engines.features.registry import FEATURE_EXECUTION_ORDER
+from src.engines.features.runner import FeatureRunner
 from src.engines.transforms.channels import ChannelTransformer
 from src.engines.transforms.videos import VideoTransformer
 from src.scripts.subscribe_channels import subscribe
@@ -125,8 +124,11 @@ async def renew_subscriptions() -> Response:
 
 @router.post("/compute-features")
 async def compute_features() -> Response:
-    """Run SQL feature computation (Phase 7)."""
-    logger.info("compute-features: not yet implemented")
+    """Run all feature SQL MERGEs in dependency order."""
+    bq, _ = _services()
+    runner = FeatureRunner(bq)
+    for name in FEATURE_EXECUTION_ORDER:
+        runner.run(name)
     return Response(status_code=200)
 
 
