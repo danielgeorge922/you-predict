@@ -218,7 +218,7 @@ class CommentTransformer:
 
 
 def _esc(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("'", "\\'")
+    return value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
 
 
 def _sql_str(value: str | None) -> str:
@@ -233,7 +233,7 @@ def _sql_int(value: int | None) -> str:
 
 def _sql_bool(value: bool | None) -> str:
     if value is None:
-        return "NULL"
+        return "CAST(NULL AS BOOL)"
     return "TRUE" if value else "FALSE"
 
 

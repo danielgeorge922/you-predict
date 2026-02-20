@@ -12,13 +12,13 @@ import logging
 from fastapi import APIRouter, Response
 
 from src.config.clients import get_bq_client, get_gcs_client, get_settings, get_youtube_client
-from src.scripts.subscribe_channels import subscribe
 from src.data_sources.bigquery import BigQueryService
 from src.data_sources.gcs import GCSService
 from src.data_sources.gcs_paths import GCSPathBuilder
 from src.engines.discovery import DiscoveryEngine
 from src.engines.transforms.channels import ChannelTransformer
 from src.engines.transforms.videos import VideoTransformer
+from src.scripts.subscribe_channels import subscribe
 from src.utils.timestamps import utcnow
 
 router = APIRouter(prefix="/pipelines", tags=["pipelines"])
