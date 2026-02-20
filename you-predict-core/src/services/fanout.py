@@ -59,6 +59,7 @@ def enqueue_fanout(
                 "published_at": published_at.isoformat(),
             },
             schedule_time=add_hours(published_at, hours),
+            task_id=f"{video_id}-snapshot-{hours}h",
         )
         ok += success
         failed += 1 - success
@@ -75,6 +76,7 @@ def enqueue_fanout(
                 "published_at": published_at.isoformat(),
             },
             schedule_time=add_hours(published_at, hours),
+            task_id=f"{video_id}-comments-{hours}h",
         )
         ok += success
         failed += 1 - success
@@ -90,6 +92,7 @@ def enqueue_fanout(
             "published_at": published_at.isoformat(),
         },
         schedule_time=add_hours(published_at, FANOUT_SCHEDULE.transcript_fetch_hours),
+        task_id=f"{video_id}-transcript",
     )
     ok += success
     failed += 1 - success
@@ -106,12 +109,18 @@ def _create_task(
     url: str,
     body: dict[str, object],
     schedule_time: datetime,
+    task_id: str,
 ) -> int:
-    """Create a single delayed HTTP Cloud Task. Returns 1 on success, 0 on failure."""
+    """Create a single delayed HTTP Cloud Task. Returns 1 on success, 0 on failure.
+
+    task_id is used as the Cloud Tasks task name for deduplication — Cloud Tasks
+    rejects a second create_task call with the same name within ~1 hour.
+    """
     ts = timestamp_pb2.Timestamp()
     ts.FromDatetime(schedule_time.astimezone(UTC))
 
     task = tasks_v2.Task(
+        name=f"{queue}/tasks/{task_id}",
         http_request=tasks_v2.HttpRequest(
             http_method=tasks_v2.HttpMethod.POST,
             url=url,
