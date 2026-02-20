@@ -56,8 +56,9 @@ class SnapshotTransformer:
             interval_hours
         )
 
-        # Delta computation: query previous snapshot
-        prev = self._get_previous_snapshot(video_id)
+        # Delta computation: query previous snapshot (exclude current interval
+        # so Cloud Tasks retries don't compare the row against itself)
+        prev = self._get_previous_snapshot(video_id, snapshot_type)
         views_delta = None
         likes_delta = None
         comments_delta = None
@@ -96,12 +97,20 @@ class SnapshotTransformer:
         affected = self._merge_snapshot(row)
         return TransformResult("fact_video_snapshot", affected, "merge")
 
-    def _get_previous_snapshot(self, video_id: str) -> dict[str, Any] | None:
-        """Get the most recent snapshot for delta computation."""
+    def _get_previous_snapshot(
+        self, video_id: str, current_snapshot_type: str
+    ) -> dict[str, Any] | None:
+        """Get the most recent snapshot for delta computation.
+
+        Excludes the current snapshot_type so that Cloud Tasks retries always
+        compare against the prior interval's row rather than the row that was
+        already upserted by a previous delivery of this same task.
+        """
         sql = f"""
         SELECT view_count, like_count, comment_count
         FROM `{{project}}.{{dataset}}.fact_video_snapshot`
         WHERE video_id = '{video_id}'
+          AND snapshot_type != '{current_snapshot_type}'
         ORDER BY actual_captured_at DESC
         LIMIT 1
         """
