@@ -14,6 +14,7 @@ import json
 import logging
 from datetime import UTC, datetime
 
+from google.api_core.exceptions import AlreadyExists
 from google.cloud import tasks_v2  # pyright: ignore[reportAttributeAccessIssue]
 from google.protobuf import timestamp_pb2
 
@@ -132,6 +133,10 @@ def _create_task(
     try:
         client.create_task(request={"parent": queue, "task": task})
         logger.debug("Queued task: %s at %s", url, schedule_time.isoformat())
+        return 1
+    except AlreadyExists:
+        # Duplicate webhook delivery — task already queued, this is expected.
+        logger.debug("Task already exists (duplicate fanout): %s", task_id)
         return 1
     except Exception as exc:
         logger.error("Failed to enqueue task %s: %s", url, exc)

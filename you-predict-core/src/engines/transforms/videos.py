@@ -125,6 +125,13 @@ class VideoTransformer:
         if not rows:
             return 0
 
+        # Deduplicate by video_id — duplicate source rows cause BigQuery to
+        # reject the MERGE with "must match at most one source row".
+        seen: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            seen[row["video_id"]] = row
+        rows = list(seen.values())
+
         selects = []
         for row in rows:
             tags = ", ".join(

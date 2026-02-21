@@ -100,8 +100,17 @@ class DiscoveryEngine:
         return self._bq.run_query(sql)
 
     def get_active_video_ids(self) -> list[str]:
-        """Get just the video IDs of actively monitored videos."""
-        rows = self.get_active_videos()
+        """Get deduplicated video IDs of actively monitored videos.
+
+        Uses DISTINCT to guard against duplicate rows in video_monitoring
+        (which can occur from concurrent webhook deliveries hitting the same
+        video before the MERGE completes).
+        """
+        sql = """
+        SELECT DISTINCT video_id FROM `{project}.{dataset}.video_monitoring`
+        WHERE is_active = TRUE
+        """
+        rows = self._bq.run_query(sql)
         return [row["video_id"] for row in rows]
 
     def get_tracked_channel_ids(self) -> list[str]:
