@@ -68,8 +68,10 @@ USING (
     END                                                  AS duration_bucket
 
   FROM `{project}.{dataset}.dim_video` dv
-  INNER JOIN `{project}.{dataset}.video_monitoring` vm
-    ON dv.video_id = vm.video_id
+  WHERE EXISTS (
+    SELECT 1 FROM `{project}.{dataset}.video_monitoring` vm
+    WHERE vm.video_id = dv.video_id
+  )
 ) AS S
 ON T.video_id = S.video_id
 

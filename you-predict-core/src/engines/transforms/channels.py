@@ -76,18 +76,12 @@ class ChannelTransformer:
                 custom_url=snippet.customUrl if snippet else None,
                 channel_thumbnail_url=best_thumbnail(snippet.thumbnails) if snippet else None,
                 channel_created_at=(
-                    parse_iso(snippet.publishedAt)
-                    if snippet and snippet.publishedAt
-                    else None
+                    parse_iso(snippet.publishedAt) if snippet and snippet.publishedAt else None
                 ),
                 made_for_kids=status.madeForKids if status else None,
-                hidden_subscriber_count=(
-                    stats.hiddenSubscriberCount if stats else None
-                ),
+                hidden_subscriber_count=(stats.hiddenSubscriberCount if stats else None),
                 channel_keywords=(
-                    branding.channel.keywords
-                    if branding and branding.channel
-                    else None
+                    branding.channel.keywords if branding and branding.channel else None
                 ),
                 uploads_playlist_id=(
                     content.relatedPlaylists.uploads
@@ -280,7 +274,9 @@ class ChannelTransformer:
 def _sql_str(value: str | None) -> str:
     if value is None:
         return "NULL"
-    escaped = value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+    escaped = (
+        value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+    )
     return f"'{escaped}'"
 
 

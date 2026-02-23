@@ -7,8 +7,8 @@ from src.engines.transforms.snapshots import SnapshotTransformer
 
 # Fixed timestamps for deterministic delta/hours assertions (midnight base → clean arithmetic)
 _PUBLISHED_AT = datetime(2026, 1, 7, 0, 0, 0, tzinfo=UTC)
-_CAPTURED_4H = datetime(2026, 1, 7, 4, 0, 0, tzinfo=UTC)    # exactly 4h later
-_CAPTURED_24H = datetime(2026, 1, 8, 0, 0, 0, tzinfo=UTC)   # exactly 24h later
+_CAPTURED_4H = datetime(2026, 1, 7, 4, 0, 0, tzinfo=UTC)  # exactly 4h later
+_CAPTURED_24H = datetime(2026, 1, 8, 0, 0, 0, tzinfo=UTC)  # exactly 24h later
 _VIDEO_ID = "QJI0an6irrA"
 _CHANNEL_ID = "UCX6OQ3DkcsbYNE6H8uQQuVA"
 

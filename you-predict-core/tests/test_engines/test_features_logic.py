@@ -61,7 +61,9 @@ class TestVideoPerformanceLogic:
 
     def _transform(self, conn):
         """Run the pivot + velocity + PERCENT_RANK transformation."""
-        return _df(conn, """
+        return _df(
+            conn,
+            """
             WITH pivoted AS (
                 SELECT
                     video_id, channel_id,
@@ -108,7 +110,8 @@ class TestVideoPerformanceLogic:
                 FROM pivoted
             )
             SELECT * FROM computed ORDER BY video_id
-        """)
+        """,
+        )
 
     def _row(self, conn, video_id: str):
         df = self._transform(conn)
@@ -138,8 +141,8 @@ class TestVideoPerformanceLogic:
     def test_view_velocity_24h_equals_views_divided_by_24(self, conn):
         vid1 = self._row(conn, "vid1")
         vid2 = self._row(conn, "vid2")
-        assert vid1["view_velocity_24h"] == pytest.approx(24000 / 24.0)   # 1000.0
-        assert vid2["view_velocity_24h"] == pytest.approx(12000 / 24.0)   # 500.0
+        assert vid1["view_velocity_24h"] == pytest.approx(24000 / 24.0)  # 1000.0
+        assert vid2["view_velocity_24h"] == pytest.approx(12000 / 24.0)  # 500.0
 
     def test_view_velocity_2h_equals_views_divided_by_2(self, conn):
         vid1 = self._row(conn, "vid1")
@@ -187,21 +190,26 @@ class TestVideoPerformanceLogic:
     def test_percent_rank_single_video_is_zero(self, conn):
         """Single video in a channel always gets PERCENT_RANK = 0."""
         con = duckdb.connect()
-        df = _df(con, """
+        df = _df(
+            con,
+            """
             WITH pivoted AS (
                 SELECT 'vid_only' AS video_id, 'chan_solo' AS channel_id, 5000 AS views_24h
             )
             SELECT PERCENT_RANK() OVER (PARTITION BY channel_id ORDER BY views_24h)
                 AS performance_vs_channel_avg
             FROM pivoted
-        """)
+        """,
+        )
         assert df["performance_vs_channel_avg"].iloc[0] == pytest.approx(0.0)
         con.close()
 
     def test_percent_rank_is_partitioned_per_channel(self, conn):
         """Videos from different channels do not affect each other's PERCENT_RANK."""
         con = duckdb.connect()
-        df = _df(con, """
+        df = _df(
+            con,
+            """
             WITH pivoted AS (
                 SELECT 'vid_a' AS video_id, 'chan_x' AS channel_id, 10000 AS views_24h
                 UNION ALL
@@ -215,7 +223,8 @@ class TestVideoPerformanceLogic:
                     AS performance_vs_channel_avg
             FROM pivoted
             ORDER BY video_id
-        """)
+        """,
+        )
         by_id = dict(zip(df["video_id"], df["performance_vs_channel_avg"]))
         # vid_a is alone in chan_x → 0.0
         assert by_id["vid_a"] == pytest.approx(0.0)
@@ -231,10 +240,13 @@ class TestVideoPerformanceLogic:
         # We only inserted 1h, 2h, 24h for vid1 — e.g. 4h was never inserted
         # (No 4h column in this minimal query, but the pattern must hold)
         # Verify via direct query
-        df = _df(conn, """
+        df = _df(
+            conn,
+            """
             SELECT MAX(CASE WHEN snapshot_type = '4h' THEN view_count END) AS views_4h
             FROM fact_video_snapshot WHERE video_id = 'vid1'
-        """)
+        """,
+        )
         assert df["views_4h"].iloc[0] is None or df["views_4h"].isna().iloc[0]
 
 
@@ -293,16 +305,12 @@ class TestChannelFeatureLogic:
 
     def test_subscriber_growth_rate_positive(self, conn):
         # subs went from 100k → 110k → growth = (110k - 100k) / 100k = 0.1
-        row = conn.execute(
-            "SELECT (110000 - 100000) / NULLIF(100000.0, 0)"
-        ).fetchone()
+        row = conn.execute("SELECT (110000 - 100000) / NULLIF(100000.0, 0)").fetchone()
         assert row[0] == pytest.approx(0.1)
 
     def test_subscriber_growth_rate_null_when_no_prior_snapshot(self, conn):
         # no snapshot 30 days ago → denominator is NULL → result is NULL
-        row = conn.execute(
-            "SELECT 110000 / NULLIF(NULL::DOUBLE, 0)"
-        ).fetchone()
+        row = conn.execute("SELECT 110000 / NULLIF(NULL::DOUBLE, 0)").fetchone()
         assert row[0] is None
 
     def test_view_consistency_score_perfectly_consistent(self, conn):
@@ -316,13 +324,16 @@ class TestChannelFeatureLogic:
         assert row[0] == pytest.approx(1.0 / 1.5)
 
     def test_avg_views_per_video_computed_across_30d(self, conn):
-        df = _df(conn, """
+        df = _df(
+            conn,
+            """
             WITH recent_videos (channel_id, view_count) AS (
                 VALUES ('chan1', 5000), ('chan1', 15000), ('chan1', 10000)
             )
             SELECT channel_id, CAST(AVG(view_count) AS BIGINT) AS avg_views_per_video_30d
             FROM recent_videos GROUP BY channel_id
-        """)
+        """,
+        )
         # (5000 + 15000 + 10000) / 3 = 10000
         assert df["avg_views_per_video_30d"].iloc[0] == 10000
 
@@ -374,21 +385,15 @@ class TestVideoContentLogic:
         assert row[0] is False
 
     def test_title_has_brackets_square_bracket(self, conn):
-        row = conn.execute(
-            r"SELECT regexp_matches('[Official] Video', '\[|\(')"
-        ).fetchone()
+        row = conn.execute(r"SELECT regexp_matches('[Official] Video', '\[|\(')").fetchone()
         assert row[0] is True
 
     def test_title_has_brackets_round_bracket(self, conn):
-        row = conn.execute(
-            r"SELECT regexp_matches('Song (Live)', '\[|\(')"
-        ).fetchone()
+        row = conn.execute(r"SELECT regexp_matches('Song (Live)', '\[|\(')").fetchone()
         assert row[0] is True
 
     def test_title_has_brackets_false(self, conn):
-        row = conn.execute(
-            r"SELECT regexp_matches('Hello World', '\[|\(')"
-        ).fetchone()
+        row = conn.execute(r"SELECT regexp_matches('Hello World', '\[|\(')").fetchone()
         assert row[0] is False
 
     def test_title_caps_ratio_half_uppercase(self, conn):
@@ -499,10 +504,10 @@ class TestTemporalLogic:
     """Verify hour/day extraction, weekend flag, LAG, and COUNT OVER."""
 
     # Jan 1 2026 = Thursday, Jan 3 = Saturday, Jan 4 = Sunday, Jan 5 = Monday
-    _THURSDAY  = "'2026-01-01 09:00:00'::TIMESTAMP"
-    _SATURDAY  = "'2026-01-03 14:00:00'::TIMESTAMP"
-    _SUNDAY    = "'2026-01-04 20:00:00'::TIMESTAMP"
-    _MONDAY    = "'2026-01-05 08:00:00'::TIMESTAMP"
+    _THURSDAY = "'2026-01-01 09:00:00'::TIMESTAMP"
+    _SATURDAY = "'2026-01-03 14:00:00'::TIMESTAMP"
+    _SUNDAY = "'2026-01-04 20:00:00'::TIMESTAMP"
+    _MONDAY = "'2026-01-05 08:00:00'::TIMESTAMP"
 
     @pytest.fixture
     def conn(self):
@@ -525,57 +530,43 @@ class TestTemporalLogic:
         con.close()
 
     def test_hour_of_day_extracted_correctly(self, conn):
-        row = conn.execute(
-            f"SELECT EXTRACT(HOUR FROM {self._SATURDAY})"
-        ).fetchone()
+        row = conn.execute(f"SELECT EXTRACT(HOUR FROM {self._SATURDAY})").fetchone()
         assert row[0] == 14
 
     def test_day_of_week_sunday_maps_to_1(self, conn):
         # DuckDB DOW: Sun=0; BigQuery DAYOFWEEK: Sun=1; conversion: DOW+1
-        row = conn.execute(
-            f"SELECT EXTRACT(DOW FROM {self._SUNDAY}) + 1"
-        ).fetchone()
+        row = conn.execute(f"SELECT EXTRACT(DOW FROM {self._SUNDAY}) + 1").fetchone()
         assert row[0] == 1  # Sunday
 
     def test_day_of_week_monday_maps_to_2(self, conn):
-        row = conn.execute(
-            f"SELECT EXTRACT(DOW FROM {self._MONDAY}) + 1"
-        ).fetchone()
+        row = conn.execute(f"SELECT EXTRACT(DOW FROM {self._MONDAY}) + 1").fetchone()
         assert row[0] == 2  # Monday
 
     def test_day_of_week_saturday_maps_to_7(self, conn):
-        row = conn.execute(
-            f"SELECT EXTRACT(DOW FROM {self._SATURDAY}) + 1"
-        ).fetchone()
+        row = conn.execute(f"SELECT EXTRACT(DOW FROM {self._SATURDAY}) + 1").fetchone()
         assert row[0] == 7  # Saturday
 
     def test_is_weekend_publish_sunday_is_true(self, conn):
-        row = conn.execute(
-            f"SELECT (EXTRACT(DOW FROM {self._SUNDAY}) + 1) IN (1, 7)"
-        ).fetchone()
+        row = conn.execute(f"SELECT (EXTRACT(DOW FROM {self._SUNDAY}) + 1) IN (1, 7)").fetchone()
         assert row[0] is True
 
     def test_is_weekend_publish_saturday_is_true(self, conn):
-        row = conn.execute(
-            f"SELECT (EXTRACT(DOW FROM {self._SATURDAY}) + 1) IN (1, 7)"
-        ).fetchone()
+        row = conn.execute(f"SELECT (EXTRACT(DOW FROM {self._SATURDAY}) + 1) IN (1, 7)").fetchone()
         assert row[0] is True
 
     def test_is_weekend_publish_monday_is_false(self, conn):
-        row = conn.execute(
-            f"SELECT (EXTRACT(DOW FROM {self._MONDAY}) + 1) IN (1, 7)"
-        ).fetchone()
+        row = conn.execute(f"SELECT (EXTRACT(DOW FROM {self._MONDAY}) + 1) IN (1, 7)").fetchone()
         assert row[0] is False
 
     def test_is_weekend_publish_thursday_is_false(self, conn):
-        row = conn.execute(
-            f"SELECT (EXTRACT(DOW FROM {self._THURSDAY}) + 1) IN (1, 7)"
-        ).fetchone()
+        row = conn.execute(f"SELECT (EXTRACT(DOW FROM {self._THURSDAY}) + 1) IN (1, 7)").fetchone()
         assert row[0] is False
 
     def _lag_df(self, conn):
         """Shared helper: compute days_since_last_upload for all videos."""
-        return _df(conn, """
+        return _df(
+            conn,
+            """
             WITH windowed AS (
                 SELECT
                     video_id,
@@ -587,11 +578,13 @@ class TestTemporalLogic:
                 FROM video_monitoring
             )
             SELECT video_id, days_since_last_upload FROM windowed ORDER BY published_at
-        """)
+        """,
+        )
 
     def test_days_since_last_upload_first_upload_is_null(self, conn):
         """First upload for a channel has no prior — LAG returns NULL → NULL gap."""
         import pandas as pd
+
         df = self._lag_df(conn)
         by_id = dict(zip(df["video_id"], df["days_since_last_upload"]))
         assert pd.isna(by_id["vid1"])
@@ -611,26 +604,32 @@ class TestTemporalLogic:
 
     def test_videos_published_same_day_channel_counts_same_day_videos(self, conn):
         """vid1 and vid3 both published Jan 1 on chan1 → each gets count 2."""
-        df = _df(conn, """
+        df = _df(
+            conn,
+            """
             SELECT video_id,
                 COUNT(*) OVER (
                     PARTITION BY channel_id, published_at::DATE
                 ) AS videos_published_same_day_channel
             FROM video_monitoring
-        """)
+        """,
+        )
         by_id = dict(zip(df["video_id"], df["videos_published_same_day_channel"]))
         assert by_id["vid1"] == 2
         assert by_id["vid3"] == 2
 
     def test_videos_published_same_day_channel_solo_upload_is_one(self, conn):
         """vid2 is the only upload on Jan 3 → count = 1."""
-        df = _df(conn, """
+        df = _df(
+            conn,
+            """
             SELECT video_id,
                 COUNT(*) OVER (
                     PARTITION BY channel_id, published_at::DATE
                 ) AS videos_published_same_day_channel
             FROM video_monitoring
-        """)
+        """,
+        )
         by_id = dict(zip(df["video_id"], df["videos_published_same_day_channel"]))
         assert by_id["vid2"] == 1
 
@@ -676,7 +675,9 @@ class TestCommentAggregatesLogic:
         con.close()
 
     def _agg(self, conn, video_id: str = "vid1"):
-        return _df(conn, f"""
+        return _df(
+            conn,
+            f"""
             SELECT
                 video_id,
                 COUNT(*)                                              AS comments_sampled,
@@ -705,7 +706,8 @@ class TestCommentAggregatesLogic:
             FROM fact_comment
             WHERE video_id = '{video_id}'
             GROUP BY video_id
-        """).iloc[0]
+        """,
+        ).iloc[0]
 
     def test_comments_sampled_count(self, conn):
         row = self._agg(conn)

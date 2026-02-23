@@ -52,9 +52,7 @@ class SnapshotTransformer:
         like_count = safe_int(stats.likeCount) if stats else None
         comment_count = safe_int(stats.commentCount) if stats else None
 
-        snapshot_type = FANOUT_SCHEDULE.interval_to_snapshot_type(
-            interval_hours
-        )
+        snapshot_type = FANOUT_SCHEDULE.interval_to_snapshot_type(interval_hours)
 
         # Delta computation: query previous snapshot (exclude current interval
         # so Cloud Tasks retries don't compare the row against itself)
@@ -67,10 +65,7 @@ class SnapshotTransformer:
                 views_delta = view_count - prev["view_count"]
             if like_count is not None and prev.get("like_count") is not None:
                 likes_delta = like_count - prev["like_count"]
-            if (
-                comment_count is not None
-                and prev.get("comment_count") is not None
-            ):
+            if comment_count is not None and prev.get("comment_count") is not None:
                 comments_delta = comment_count - prev["comment_count"]
 
         snap = FactVideoSnapshot(
@@ -87,9 +82,7 @@ class SnapshotTransformer:
             likes_delta=likes_delta,
             comments_delta=comments_delta,
             hours_since_publish=interval_hours,
-            actual_hours_since_publish=round(
-                hours_since(published_at, captured_at), 2
-            ),
+            actual_hours_since_publish=round(hours_since(published_at, captured_at), 2),
             days_since_publish=days_since(published_at, captured_at),
         )
         row = snap.model_dump(mode="json")

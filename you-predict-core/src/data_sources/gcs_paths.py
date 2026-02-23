@@ -16,7 +16,10 @@ class GCSPathBuilder:
         return f"video_metadata/{video_id}/{video_id}_{ts.isoformat()}.json"
 
     def video_snapshot(
-        self, video_id: str, ts: datetime, snapshot_date: date | None = None,
+        self,
+        video_id: str,
+        ts: datetime,
+        snapshot_date: date | None = None,
     ) -> str:
         d = (snapshot_date or ts.date()).isoformat()
         return f"video_snapshot_stats/{d}/{video_id}_{ts.isoformat()}.json"

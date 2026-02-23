@@ -3,13 +3,39 @@
 import re
 import string
 
-POWER_WORDS = frozenset({
-    "insane", "secret", "shocking", "unbelievable", "incredible", "amazing",
-    "ultimate", "exposed", "revealed", "banned", "warning", "urgent",
-    "breaking", "exclusive", "epic", "crazy", "huge", "massive",
-    "destroyed", "ruined", "worst", "best", "perfect", "impossible",
-    "never", "always", "finally", "gone wrong", "not clickbait",
-})
+POWER_WORDS = frozenset(
+    {
+        "insane",
+        "secret",
+        "shocking",
+        "unbelievable",
+        "incredible",
+        "amazing",
+        "ultimate",
+        "exposed",
+        "revealed",
+        "banned",
+        "warning",
+        "urgent",
+        "breaking",
+        "exclusive",
+        "epic",
+        "crazy",
+        "huge",
+        "massive",
+        "destroyed",
+        "ruined",
+        "worst",
+        "best",
+        "perfect",
+        "impossible",
+        "never",
+        "always",
+        "finally",
+        "gone wrong",
+        "not clickbait",
+    }
+)
 
 # Regex for common emoji Unicode ranges
 _EMOJI_PATTERN = re.compile(

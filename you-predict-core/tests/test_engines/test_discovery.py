@@ -10,7 +10,6 @@ _PUBLISHED_AT = datetime(2026, 1, 7, 20, 0, 0, tzinfo=UTC)
 
 
 class TestRegisterVideo:
-
     def test_returns_true_when_new_video(self, mock_bq):
         # run_merge returns 1 → new row inserted
         engine = DiscoveryEngine(mock_bq, monitoring_window_hours=72)
@@ -70,7 +69,6 @@ class TestRegisterVideo:
 
 
 class TestIsVideoRegistered:
-
     def test_returns_true_when_found(self, mock_bq):
         mock_bq.run_query.return_value = [{"1": 1}]
         engine = DiscoveryEngine(mock_bq)
@@ -89,7 +87,6 @@ class TestIsVideoRegistered:
 
 
 class TestExpireMonitoring:
-
     def test_returns_expired_count(self, mock_bq):
         mock_bq.run_merge.return_value = 3
         engine = DiscoveryEngine(mock_bq)
@@ -121,7 +118,6 @@ class TestExpireMonitoring:
 
 
 class TestGetActiveVideoIds:
-
     def test_returns_video_ids(self, mock_bq):
         mock_bq.run_query.return_value = [
             {"video_id": "abc", "channel_id": "UCxyz", "is_active": True},

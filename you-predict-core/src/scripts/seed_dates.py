@@ -22,8 +22,19 @@ END_DATE = datetime.date(2028, 12, 31)
 
 DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 MONTH_NAMES = [
-    "", "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 
 # Fixed-date US holidays. Floating holidays (Thanksgiving, etc.) are computed below.
@@ -77,21 +88,23 @@ def _build_date_rows() -> list[dict[str, Any]]:
     current = START_DATE
 
     while current <= END_DATE:
-        rows.append({
-            "date_key": int(current.strftime("%Y%m%d")),
-            "full_date": current.isoformat(),
-            "year": current.year,
-            "quarter": (current.month - 1) // 3 + 1,
-            "month": current.month,
-            "month_name": MONTH_NAMES[current.month],
-            "week_of_year": current.isocalendar()[1],
-            "day_of_month": current.day,
-            "day_of_week": current.isoweekday(),
-            "day_name": DAY_NAMES[current.weekday()],
-            "is_weekend": current.weekday() >= 5,
-            "is_us_holiday": _is_us_holiday(current),
-            "season": _season(current),
-        })
+        rows.append(
+            {
+                "date_key": int(current.strftime("%Y%m%d")),
+                "full_date": current.isoformat(),
+                "year": current.year,
+                "quarter": (current.month - 1) // 3 + 1,
+                "month": current.month,
+                "month_name": MONTH_NAMES[current.month],
+                "week_of_year": current.isocalendar()[1],
+                "day_of_month": current.day,
+                "day_of_week": current.isoweekday(),
+                "day_name": DAY_NAMES[current.weekday()],
+                "is_weekend": current.weekday() >= 5,
+                "is_us_holiday": _is_us_holiday(current),
+                "season": _season(current),
+            }
+        )
         current += datetime.timedelta(days=1)
 
     return rows

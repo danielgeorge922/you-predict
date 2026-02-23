@@ -92,9 +92,19 @@ class TestBuildDateRows:
     def test_all_rows_have_required_fields(self):
         rows = _build_date_rows()
         required = {
-            "date_key", "full_date", "year", "quarter", "month",
-            "month_name", "week_of_year", "day_of_month", "day_of_week",
-            "day_name", "is_weekend", "is_us_holiday", "season",
+            "date_key",
+            "full_date",
+            "year",
+            "quarter",
+            "month",
+            "month_name",
+            "week_of_year",
+            "day_of_month",
+            "day_of_week",
+            "day_name",
+            "is_weekend",
+            "is_us_holiday",
+            "season",
         }
         for row in rows:
             assert set(row.keys()) == required

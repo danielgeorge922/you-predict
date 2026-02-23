@@ -11,9 +11,11 @@ MERGE `{project}.{dataset}.ml_feature_temporal` AS T
 USING (
   WITH
 
-  -- All monitored videos with their publish timestamps
+  -- All monitored videos with their publish timestamps.
+  -- DISTINCT guards against duplicate video_id rows that can appear in
+  -- video_monitoring when concurrent webhook deliveries race on the same video.
   all_videos AS (
-    SELECT
+    SELECT DISTINCT
       video_id,
       channel_id,
       published_at

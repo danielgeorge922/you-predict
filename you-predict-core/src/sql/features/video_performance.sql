@@ -85,7 +85,12 @@ USING (
       p.*,
       vm.published_at
     FROM pivoted p
-    INNER JOIN `{project}.{dataset}.video_monitoring` vm
+    -- Deduplicated subquery: video_monitoring can have duplicate video_id rows
+    -- from concurrent webhook deliveries racing on the same video.
+    INNER JOIN (
+      SELECT DISTINCT video_id, channel_id, published_at
+      FROM `{project}.{dataset}.video_monitoring`
+    ) vm
       ON p.video_id = vm.video_id
   ),
 

@@ -22,7 +22,6 @@ _EMPTY_TRANSCRIPT = ""
 
 
 class TestTranscriptTransform:
-
     def test_returns_dim_video_transcript_result(self, mock_bq):
         transformer = TranscriptTransformer(mock_bq)
         result = transformer.transform(

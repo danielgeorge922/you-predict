@@ -42,9 +42,7 @@ class CommentTransformer:
             pulled_at: When the comments were fetched.
             sample_strategy: Sampling method (e.g. "relevance", "time").
         """
-        response = CommentThreadListResponse.model_validate(
-            {"items": raw_items}
-        )
+        response = CommentThreadListResponse.model_validate({"items": raw_items})
         if not response.items:
             logger.warning("No comment threads to transform for %s", video_id)
             return TransformResult("fact_comment", 0, "merge")
@@ -83,9 +81,7 @@ class CommentTransformer:
             # Top-level comment
             commenter_channel_id = None
             if top_snippet.authorChannelId:
-                commenter_channel_id = top_snippet.authorChannelId.get(
-                    "value"
-                )
+                commenter_channel_id = top_snippet.authorChannelId.get("value")
 
             fact = FactComment(
                 comment_id=top_comment.id,
@@ -99,15 +95,9 @@ class CommentTransformer:
                 like_count=top_snippet.likeCount,
                 reply_count=thread.snippet.totalReplyCount,
                 published_at=(
-                    parse_iso(top_snippet.publishedAt)
-                    if top_snippet.publishedAt
-                    else None
+                    parse_iso(top_snippet.publishedAt) if top_snippet.publishedAt else None
                 ),
-                updated_at=(
-                    parse_iso(top_snippet.updatedAt)
-                    if top_snippet.updatedAt
-                    else None
-                ),
+                updated_at=(parse_iso(top_snippet.updatedAt) if top_snippet.updatedAt else None),
                 pulled_at=pulled_at,
                 pull_date=pull_date,
                 sample_strategy=sample_strategy,
@@ -124,9 +114,7 @@ class CommentTransformer:
 
                     reply_commenter_id = None
                     if reply_snippet.authorChannelId:
-                        reply_commenter_id = (
-                            reply_snippet.authorChannelId.get("value")
-                        )
+                        reply_commenter_id = reply_snippet.authorChannelId.get("value")
 
                     reply_fact = FactComment(
                         comment_id=reply_comment.id,
@@ -145,9 +133,7 @@ class CommentTransformer:
                             else None
                         ),
                         updated_at=(
-                            parse_iso(reply_snippet.updatedAt)
-                            if reply_snippet.updatedAt
-                            else None
+                            parse_iso(reply_snippet.updatedAt) if reply_snippet.updatedAt else None
                         ),
                         pulled_at=pulled_at,
                         pull_date=pull_date,
@@ -218,7 +204,9 @@ class CommentTransformer:
 
 
 def _esc(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+    return (
+        value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+    )
 
 
 def _sql_str(value: str | None) -> str:

@@ -8,15 +8,28 @@ from src.data_sources.bigquery_schemas import TABLE_REGISTRY
 class TestTableRegistry:
     def test_has_all_expected_tables(self):
         expected = {
-            "dim_channel", "dim_video", "dim_category", "dim_date",
-            "dim_video_transcript", "video_monitoring", "tracked_channels",
-            "fact_channel_snapshot", "fact_video_snapshot", "fact_comment",
-            "ml_feature_video_performance", "ml_feature_video_content",
-            "ml_feature_temporal", "ml_feature_channel",
+            "dim_channel",
+            "dim_video",
+            "dim_category",
+            "dim_date",
+            "dim_video_transcript",
+            "video_monitoring",
+            "tracked_channels",
+            "fact_channel_snapshot",
+            "fact_video_snapshot",
+            "fact_comment",
+            "ml_feature_video_performance",
+            "ml_feature_video_content",
+            "ml_feature_temporal",
+            "ml_feature_channel",
             "ml_feature_comment_aggregates",
-            "mart_video_summary", "mart_channel_daily",
-            "ml_model_registry", "ml_prediction_log", "ml_experiment_log",
-            "pipeline_run_log", "data_quality_results",
+            "mart_video_summary",
+            "mart_channel_daily",
+            "ml_model_registry",
+            "ml_prediction_log",
+            "ml_experiment_log",
+            "pipeline_run_log",
+            "data_quality_results",
         }
         assert set(TABLE_REGISTRY.keys()) == expected
 
@@ -60,15 +73,11 @@ class TestTableRegistry:
         """Every table should have at least one REQUIRED field (the key)."""
         for table_name, (schema, _, _) in TABLE_REGISTRY.items():
             required = [f for f in schema if f.mode == "REQUIRED"]
-            assert len(required) >= 1, (
-                f"{table_name}: no REQUIRED fields found"
-            )
+            assert len(required) >= 1, f"{table_name}: no REQUIRED fields found"
 
     def test_fact_tables_are_partitioned(self):
         """All fact tables should be date-partitioned."""
         fact_tables = [t for t in TABLE_REGISTRY if t.startswith("fact_")]
         for table_name in fact_tables:
             _, partition, _ = TABLE_REGISTRY[table_name]
-            assert partition is not None, (
-                f"{table_name}: fact table should be partitioned"
-            )
+            assert partition is not None, f"{table_name}: fact table should be partitioned"

@@ -58,58 +58,34 @@ class VideoTransformer:
                 title=snippet.title if snippet else None,
                 description=snippet.description if snippet else None,
                 published_at=(
-                    parse_iso(snippet.publishedAt)
-                    if snippet and snippet.publishedAt
-                    else None
+                    parse_iso(snippet.publishedAt) if snippet and snippet.publishedAt else None
                 ),
-                thumbnail_url=(
-                    best_thumbnail(snippet.thumbnails)
-                    if snippet
-                    else None
-                ),
+                thumbnail_url=(best_thumbnail(snippet.thumbnails) if snippet else None),
                 duration_seconds=(
                     parse_iso8601_duration(content.duration)
                     if content and content.duration
                     else None
                 ),
-                category_id=(
-                    int(snippet.categoryId)
-                    if snippet and snippet.categoryId
-                    else None
-                ),
+                category_id=(int(snippet.categoryId) if snippet and snippet.categoryId else None),
                 is_livestream=(
                     snippet.liveBroadcastContent in ("live", "upcoming")
                     if snippet and snippet.liveBroadcastContent
                     else False
                 ),
                 is_age_restricted=None,  # contentRating not parsed yet
-                made_for_kids=(
-                    status.madeForKids if status else None
-                ),
-                has_custom_thumbnail=(
-                    content.hasCustomThumbnail if content else None
-                ),
+                made_for_kids=(status.madeForKids if status else None),
+                has_custom_thumbnail=(content.hasCustomThumbnail if content else None),
                 definition=content.definition if content else None,
                 caption_available=(
-                    content.caption == "true"
-                    if content and content.caption
-                    else None
+                    content.caption == "true" if content and content.caption else None
                 ),
-                licensed_content=(
-                    content.licensedContent if content else None
-                ),
-                has_paid_promotion=(
-                    paid.hasPaidProductPlacement if paid else None
-                ),
+                licensed_content=(content.licensedContent if content else None),
+                has_paid_promotion=(paid.hasPaidProductPlacement if paid else None),
                 tags=snippet.tags or [] if snippet else [],
-                topics=(
-                    topic.topicCategories or [] if topic else []
-                ),
+                topics=(topic.topicCategories or [] if topic else []),
                 view_count=safe_int(stats.viewCount) if stats else None,
                 like_count=safe_int(stats.likeCount) if stats else None,
-                comment_count=(
-                    safe_int(stats.commentCount) if stats else None
-                ),
+                comment_count=(safe_int(stats.commentCount) if stats else None),
                 first_seen_at=now,  # Preserved on UPDATE via MERGE SQL
                 updated_at=now,
             )
@@ -134,12 +110,8 @@ class VideoTransformer:
 
         selects = []
         for row in rows:
-            tags = ", ".join(
-                f"'{_esc(t)}'" for t in (row.get("tags") or [])
-            )
-            topics = ", ".join(
-                f"'{_esc(t)}'" for t in (row.get("topics") or [])
-            )
+            tags = ", ".join(f"'{_esc(t)}'" for t in (row.get("tags") or []))
+            topics = ", ".join(f"'{_esc(t)}'" for t in (row.get("topics") or []))
             selects.append(
                 f"SELECT "
                 f"'{row['video_id']}' AS video_id, "
@@ -222,7 +194,9 @@ class VideoTransformer:
 
 
 def _esc(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+    return (
+        value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+    )
 
 
 def _sql_str(value: str | None) -> str:

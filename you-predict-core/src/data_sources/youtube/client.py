@@ -274,5 +274,7 @@ class YouTubeClient:
             logger.info("Fetched transcript for %s (%d chars)", video_id, len(full_text))
             return full_text
         except Exception as exc:
-            logger.warning("No transcript available for %s (%s: %s)", video_id, type(exc).__name__, exc)
+            logger.warning(
+                "No transcript available for %s (%s: %s)", video_id, type(exc).__name__, exc
+            )
             return None

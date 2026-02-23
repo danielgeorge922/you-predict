@@ -152,9 +152,7 @@ class TestVideoTransformerFull:
         assert result.rows_written == 0
         mock_bq.run_merge.assert_not_called()
 
-    def test_transform_two_videos(
-        self, video_item_celebrities, video_item_sky, mock_bq
-    ):
+    def test_transform_two_videos(self, video_item_celebrities, video_item_sky, mock_bq):
         transformer = VideoTransformer(mock_bq)
         result = transformer.transform([video_item_celebrities, video_item_sky])
         assert result.table_name == "dim_video"
