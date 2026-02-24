@@ -59,7 +59,69 @@ Predictions don't exist yet (Phase 9 ML pipeline not built). Frontend currently 
 
 - [ ] Wire `GET /channels/{channel_id}/videos` to include real `predicted_virality` from `ml_prediction_log`
 - [ ] Wire `GET /videos/{video_id}` to return snapshot time series for growth chart
-- [ ] Implement `app/model-performance/page.tsx` — show model metrics from `ml_experiment_log`
-- [ ] Implement `app/model-monitoring/page.tsx` — show drift detection, accuracy over time from `ml_experiment_log`
 - [ ] Wire "Retrain Model" button to trigger `POST /pipelines/train-model` (Phase 9 endpoint)
 - [ ] Replace hardcoded version dropdown with real model versions from `ml_model_registry`
+
+---
+
+## Phase I: Nav Restructure + New Pages (UI Sprint)
+
+Planned nav: **[ Predictions ] [ Model Health ] [ Channel Analytics ]**
+Replaces: Inference Visualization | Model Performance | Model Monitoring
+
+### I-1: Nav + routing cleanup
+- [ ] `components/Header.tsx` — update `routes` array: rename labels and update hrefs
+  - `"Inference Visualization"` → `"Predictions"` (href stays `/inference-visualization`)
+  - `"Model Performance"` → `"Model Health"` (href: `/model-health`)
+  - `"Model Monitoring"` → delete (redirect to `/model-health`)
+- [ ] Rename `app/model-performance/` → `app/model-health/`
+- [ ] Delete `app/model-monitoring/page.tsx` (or add redirect to `/model-health`)
+
+### I-2: Predictions page enhancements
+- [ ] Add `StatBar` component at top of `/inference-visualization` page
+  - Fields: videos being monitored, total predictions made, model accuracy
+  - Dummy values for now; replace with real API data in Phase D/H
+- [ ] `components/VideoCard.tsx` — add `confidence` field to `VideoData` interface (0–1 float)
+  - Display as `"Viral — 87% confidence"` next to classification badge
+- [ ] `consts/videos.ts` — add `confidence` values to all dummy video entries
+
+### I-3: Model Health page (`app/model-health/page.tsx`)
+Merges the old Model Performance + Model Monitoring placeholders into one page.
+
+- [ ] Install Recharts: `npm install recharts` in `client/`
+- [ ] Create `consts/modelHealth.ts` — dummy data:
+  - Summary metrics (overall accuracy, precision/recall/F1 for viral class)
+  - 3×3 confusion matrix values (underperforming / average / viral)
+  - Top 10 feature importances (name + importance score)
+  - Confidence distribution histogram buckets
+  - Model version history (version, trained date, accuracy, status)
+- [ ] `components/ConfusionMatrix.tsx` — 3×3 colored grid, diagonal = correct
+- [ ] `components/FeatureImportanceChart.tsx` — horizontal bar chart (Recharts)
+- [ ] `components/ConfidenceHistogram.tsx` — histogram of prediction confidence scores
+- [ ] `app/model-health/page.tsx` — assemble sections:
+  1. Summary metric card row (4 cards)
+  2. Confusion matrix + feature importance side-by-side
+  3. Confidence distribution histogram
+  4. Model version timeline table
+
+### I-4: Channel Analytics page (`app/channel-analytics/`)
+Product analytics focused — answers "what drives virality on these channels?"
+
+- [ ] Add `"Channel Analytics"` tab to Header routes (href: `/channel-analytics`)
+- [ ] Create `consts/channelAnalytics.ts` — dummy data:
+  - Per-channel benchmarks: avg_views_30d, viral_rate, engagement_rate, uploads_per_week, subscriber_tier
+  - Posting heatmap: 7×24 grid of avg view velocity (day × hour)
+  - Velocity curves: 3 arrays of {hour, views} for viral / average / underperforming
+- [ ] `components/ChannelBenchmarkTable.tsx` — sortable table (click column header to sort)
+  - Columns: Channel, Subscriber Tier, Avg Views, Viral Rate, Engagement Rate, Uploads/wk
+  - Tier badge (micro/small/medium/large) with color coding
+- [ ] `components/PostingHeatmap.tsx` — 7×24 color grid (Tailwind bg-opacity for intensity)
+  - Rows = Mon–Sun, Cols = 12am–11pm, color = view velocity quartile
+- [ ] `components/VelocityCurveChart.tsx` — multi-line chart (Recharts LineChart)
+  - 3 traces: viral (green), average (yellow), underperforming (red)
+  - X = hours since publish (0–72), Y = cumulative views
+- [ ] `app/channel-analytics/page.tsx` — assemble sections:
+  1. Page header with description
+  2. Channel Benchmarks sortable table
+  3. Best Time to Post heatmap (with insight callout)
+  4. View Velocity Curves (72h window)

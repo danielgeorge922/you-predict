@@ -37,7 +37,7 @@ const page = () => {
           {channels.map((channel) => (
             <a
               key={channel.id}
-              href={`/inference-visualization/${channel.id}`}
+              href={`/predictions/${channel.id}`}
               className="group bg-white rounded-2xl p-6 shadow-sm hover:bg-blue-100 transition-colors duration-200"
             >
               <div className="flex items-center space-x-4">

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 
 const ChannelsSidebar = () => {
   const pathname = usePathname();
-  const currentChannelId = pathname.split("/")[2]; // Extract ID from /inference-visualization/[id]
+  const currentChannelId = pathname.split("/")[2]; // Extract ID from /predictions/[id]
 
   return (
     <div className="bg-white border-r border-gray-200">
@@ -19,7 +19,7 @@ const ChannelsSidebar = () => {
           return (
             <li key={channel.id}>
               <a
-                href={`/inference-visualization/${channel.id}`}
+                href={`/predictions/${channel.id}`}
                 className={`flex items-center p-4 rounded-xl transition-colors ${
                   isActive ? "bg-blue-100 border-blue-500" : "hover:bg-gray-100"
                 }`}

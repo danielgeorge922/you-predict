@@ -8,6 +8,7 @@ import logging
 from typing import Any
 
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from youtube_transcript_api import (
     YouTubeTranscriptApi,  # pyright: ignore[reportMissingModuleSource]
 )
@@ -226,24 +227,37 @@ class YouTubeClient:
         )
 
         all_items: list[dict[str, Any]] = []
-        for _ in range(max_pages):
-            response: dict[str, Any] = request.execute()
-            self._track_quota(1)
+        try:
+            for _ in range(max_pages):
+                response: dict[str, Any] = request.execute()
+                self._track_quota(1)
 
-            items = response.get("items", [])
-            all_items.extend(items)
+                items = response.get("items", [])
+                all_items.extend(items)
 
-            next_page = response.get("nextPageToken")
-            if not next_page:
-                break
+                next_page = response.get("nextPageToken")
+                if not next_page:
+                    break
 
-            request = self._service.commentThreads().list(
-                part="snippet,replies",
-                videoId=video_id,
-                maxResults=min(max_results, 100),
-                order=order,
-                pageToken=next_page,
-            )
+                request = self._service.commentThreads().list(
+                    part="snippet,replies",
+                    videoId=video_id,
+                    maxResults=min(max_results, 100),
+                    order=order,
+                    pageToken=next_page,
+                )
+        except HttpError as exc:
+            if exc.resp.status in (400, 403):
+                # Permanent failure — comments disabled or forbidden on this video.
+                # Return empty so the task handler logs a warning and returns 200,
+                # stopping Cloud Tasks from retrying indefinitely.
+                logger.warning(
+                    "Comments unavailable for %s (HTTP %d) — skipping",
+                    video_id,
+                    exc.resp.status,
+                )
+                return CommentThreadListResponse(items=[])
+            raise
 
         logger.info("Fetched %d comment threads for video %s", len(all_items), video_id)
         return CommentThreadListResponse.model_validate({"items": all_items})

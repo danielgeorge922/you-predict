@@ -11,8 +11,8 @@ Jan 10 = Saturday (used in temporal tests).
 """
 
 import duckdb
+import pandas as pd
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helper
@@ -225,7 +225,7 @@ class TestVideoPerformanceLogic:
             ORDER BY video_id
         """,
         )
-        by_id = dict(zip(df["video_id"], df["performance_vs_channel_avg"]))
+        by_id = dict(zip(df["video_id"], df["performance_vs_channel_avg"], strict=False))
         # vid_a is alone in chan_x → 0.0
         assert by_id["vid_a"] == pytest.approx(0.0)
         # vid_b highest in chan_y → 1.0
@@ -236,7 +236,6 @@ class TestVideoPerformanceLogic:
 
     def test_missing_interval_snapshot_is_null(self, conn):
         """Intervals with no snapshot row produce NULL (not 0) via MAX(CASE WHEN)."""
-        vid1 = self._row(conn, "vid1")
         # We only inserted 1h, 2h, 24h for vid1 — e.g. 4h was never inserted
         # (No 4h column in this minimal query, but the pattern must hold)
         # Verify via direct query
@@ -424,11 +423,21 @@ class TestVideoContentLogic:
     def _power_word_count(self, conn, title: str) -> int:
         row = conn.execute(f"""
             SELECT (
-                CASE WHEN regexp_matches(lower('{title}'), 'insane|secret|shocking|unbelievable|incredible|amazing')    THEN 1 ELSE 0 END
-              + CASE WHEN regexp_matches(lower('{title}'), 'ultimate|exposed|revealed|banned|warning|urgent')           THEN 1 ELSE 0 END
-              + CASE WHEN regexp_matches(lower('{title}'), 'breaking|exclusive|epic|crazy|huge|massive')                THEN 1 ELSE 0 END
-              + CASE WHEN regexp_matches(lower('{title}'), 'destroyed|ruined|worst|best|perfect|impossible')            THEN 1 ELSE 0 END
-              + CASE WHEN regexp_matches(lower('{title}'), 'never|always|finally|gone wrong|not clickbait')             THEN 1 ELSE 0 END
+                CASE WHEN regexp_matches(lower('{title}'),
+                    'insane|secret|shocking|unbelievable|incredible|amazing'
+                ) THEN 1 ELSE 0 END
+              + CASE WHEN regexp_matches(lower('{title}'),
+                    'ultimate|exposed|revealed|banned|warning|urgent'
+                ) THEN 1 ELSE 0 END
+              + CASE WHEN regexp_matches(lower('{title}'),
+                    'breaking|exclusive|epic|crazy|huge|massive'
+                ) THEN 1 ELSE 0 END
+              + CASE WHEN regexp_matches(lower('{title}'),
+                    'destroyed|ruined|worst|best|perfect|impossible'
+                ) THEN 1 ELSE 0 END
+              + CASE WHEN regexp_matches(lower('{title}'),
+                    'never|always|finally|gone wrong|not clickbait'
+                ) THEN 1 ELSE 0 END
             )
         """).fetchone()
         return row[0]
@@ -572,7 +581,8 @@ class TestTemporalLogic:
                     video_id,
                     published_at,
                     DATEDIFF('day',
-                        LAG(published_at::DATE) OVER (PARTITION BY channel_id ORDER BY published_at),
+                        LAG(published_at::DATE)
+                            OVER (PARTITION BY channel_id ORDER BY published_at),
                         published_at::DATE
                     ) AS days_since_last_upload
                 FROM video_monitoring
@@ -583,23 +593,21 @@ class TestTemporalLogic:
 
     def test_days_since_last_upload_first_upload_is_null(self, conn):
         """First upload for a channel has no prior — LAG returns NULL → NULL gap."""
-        import pandas as pd
-
         df = self._lag_df(conn)
-        by_id = dict(zip(df["video_id"], df["days_since_last_upload"]))
+        by_id = dict(zip(df["video_id"], df["days_since_last_upload"], strict=False))
         assert pd.isna(by_id["vid1"])
 
     def test_days_since_last_upload_same_day_is_zero(self, conn):
         """Two uploads on the same calendar day → gap = 0."""
         df = self._lag_df(conn)
-        by_id = dict(zip(df["video_id"], df["days_since_last_upload"]))
+        by_id = dict(zip(df["video_id"], df["days_since_last_upload"], strict=False))
         # vid3 published Jan 1 18:00, prior upload vid1 was Jan 1 09:00 → same calendar day
         assert by_id["vid3"] == 0
 
     def test_days_since_last_upload_two_day_gap(self, conn):
         """Upload on Jan 3 with prior on Jan 1 → gap = 2 days."""
         df = self._lag_df(conn)
-        by_id = dict(zip(df["video_id"], df["days_since_last_upload"]))
+        by_id = dict(zip(df["video_id"], df["days_since_last_upload"], strict=False))
         assert by_id["vid2"] == 2
 
     def test_videos_published_same_day_channel_counts_same_day_videos(self, conn):
@@ -614,7 +622,7 @@ class TestTemporalLogic:
             FROM video_monitoring
         """,
         )
-        by_id = dict(zip(df["video_id"], df["videos_published_same_day_channel"]))
+        by_id = dict(zip(df["video_id"], df["videos_published_same_day_channel"], strict=False))
         assert by_id["vid1"] == 2
         assert by_id["vid3"] == 2
 
@@ -630,7 +638,7 @@ class TestTemporalLogic:
             FROM video_monitoring
         """,
         )
-        by_id = dict(zip(df["video_id"], df["videos_published_same_day_channel"]))
+        by_id = dict(zip(df["video_id"], df["videos_published_same_day_channel"], strict=False))
         assert by_id["vid2"] == 1
 
 
@@ -667,9 +675,12 @@ class TestCommentAggregatesLogic:
         # c3: neutral, low toxicity, 5 likes, commenter = channel owner (creator reply)
         con.execute("""
             INSERT INTO fact_comment VALUES
-            ('vid1','chan1','c1','Great video!',  0.8, 0.10, 0.05, 0.10, 0.05, 10, 2, 'user1', 'top'),
-            ('vid1','chan1','c2','I hate this',  -0.7, 0.70, 0.40, 0.80, 0.60,  0, 0, 'user2', 'top'),
-            ('vid1','chan1','c3','ok I guess',    0.0, 0.20, 0.10, 0.10, 0.10,  5, 1, 'chan1', 'top')
+            ('vid1', 'chan1', 'c1', 'Great video!',
+             0.8, 0.10, 0.05, 0.10, 0.05, 10, 2, 'user1', 'top'),
+            ('vid1', 'chan1', 'c2', 'I hate this',
+             -0.7, 0.70, 0.40, 0.80, 0.60, 0, 0, 'user2', 'top'),
+            ('vid1', 'chan1', 'c3', 'ok I guess',
+             0.0, 0.20, 0.10, 0.10, 0.10, 5, 1, 'chan1', 'top')
         """)
         yield con
         con.close()

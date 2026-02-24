@@ -71,7 +71,7 @@ const InferenceVisualizationPage = ({
       <div className="flex justify-between items-center w-full mb-8">
         <div className="flex items-center">
           <button
-            onClick={() => router.push("/inference-visualization")}
+            onClick={() => router.push("/predictions")}
             className="text-gray-400 hover:text-gray-800 hover:cursor-pointer transition-colors"
           >
             <h1 className="text-[20px]">Channels</h1>

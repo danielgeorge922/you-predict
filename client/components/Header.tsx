@@ -21,9 +21,9 @@ const Header = () => {
   ];
 
   const routes = [
-    { label: "Inference Visualization", href: "/inference-visualization" },
-    { label: "Model Performance", href: "/model-performance" },
-    { label: "Model Monitoring", href: "/model-monitoring" },
+    { label: "Predictions", href: "/predictions" },
+    { label: "Model Health", href: "/model-health" },
+    { label: "Channel Analytics", href: "/channel-analytics" },
   ];
 
   const currentTab = routes.findIndex((route) =>
