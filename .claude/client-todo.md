@@ -26,8 +26,8 @@
 
 ## Phase D: Replace Hardcoded Data with Real API Calls
 
-- [ ] `app/inference-visualization/page.tsx` — replace `consts/channels.ts` import with `getChannels()` API call; handle loading/error state
-- [ ] `app/inference-visualization/[id]/page.tsx` — replace `consts/videos.ts` import with `getChannelVideos(id)` API call; handle loading/error/empty state
+- [ ] `app/predictions/page.tsx` — replace `consts/channels.ts` import with `getChannels()` API call; handle loading/error state
+- [ ] `app/predictions/[id]/page.tsx` — replace `consts/videos.ts` import with `getChannelVideos(id)` API call; handle loading/error/empty state
 - [ ] `components/ChannelsSidebar.tsx` — accept channels as props (passed down from page) instead of importing from consts
 - [ ] `components/VideoCard.tsx` — update thumbnail source from hardcoded rickroll to real `dim_video.thumbnail_url`
 - [ ] Remove `consts/channels.ts` and `consts/videos.ts` once replaced (or keep as fallback mock data)
@@ -66,30 +66,28 @@ Predictions don't exist yet (Phase 9 ML pipeline not built). Frontend currently 
 
 ## Phase I: Nav Restructure + New Pages (UI Sprint)
 
-Planned nav: **[ Predictions ] [ Model Health ] [ Channel Analytics ]**
-Replaces: Inference Visualization | Model Performance | Model Monitoring
+Planned nav: **[ Predictions ] [ Model Performance ] [ Channel Analytics ]**
 
-### I-1: Nav + routing cleanup
-- [ ] `components/Header.tsx` — update `routes` array: rename labels and update hrefs
-  - `"Inference Visualization"` → `"Predictions"` (href stays `/inference-visualization`)
-  - `"Model Performance"` → `"Model Health"` (href: `/model-health`)
-  - `"Model Monitoring"` → delete (redirect to `/model-health`)
-- [ ] Rename `app/model-performance/` → `app/model-health/`
-- [ ] Delete `app/model-monitoring/page.tsx` (or add redirect to `/model-health`)
+### I-1: Nav + routing cleanup ✅ (mostly done)
+- [x] Header routes updated: `Predictions` → `/predictions`, `Model Health` → `/model-health`, `Channel Analytics` → `/channel-analytics`
+- [x] Old pages deleted (`inference-visualization`, `model-performance`, `model-monitoring`)
+- [x] New page stubs created (`predictions`, `model-health`, `channel-analytics`)
+- [ ] `components/Header.tsx` — rename `"Model Health"` → `"Model Performance"` (label + href: `/model-performance`)
+- [ ] Rename `app/model-health/` → `app/model-performance/`
 
 ### I-2: Predictions page enhancements
-- [ ] Add `StatBar` component at top of `/inference-visualization` page
+- [ ] Add `StatBar` component at top of `/predictions` page
   - Fields: videos being monitored, total predictions made, model accuracy
   - Dummy values for now; replace with real API data in Phase D/H
 - [ ] `components/VideoCard.tsx` — add `confidence` field to `VideoData` interface (0–1 float)
   - Display as `"Viral — 87% confidence"` next to classification badge
 - [ ] `consts/videos.ts` — add `confidence` values to all dummy video entries
 
-### I-3: Model Health page (`app/model-health/page.tsx`)
+### I-3: Model Performance page (`app/model-performance/page.tsx`)
 Merges the old Model Performance + Model Monitoring placeholders into one page.
 
 - [ ] Install Recharts: `npm install recharts` in `client/`
-- [ ] Create `consts/modelHealth.ts` — dummy data:
+- [ ] Create `consts/modelPerformance.ts` — dummy data:
   - Summary metrics (overall accuracy, precision/recall/F1 for viral class)
   - 3×3 confusion matrix values (underperforming / average / viral)
   - Top 10 feature importances (name + importance score)
@@ -98,30 +96,66 @@ Merges the old Model Performance + Model Monitoring placeholders into one page.
 - [ ] `components/ConfusionMatrix.tsx` — 3×3 colored grid, diagonal = correct
 - [ ] `components/FeatureImportanceChart.tsx` — horizontal bar chart (Recharts)
 - [ ] `components/ConfidenceHistogram.tsx` — histogram of prediction confidence scores
-- [ ] `app/model-health/page.tsx` — assemble sections:
+- [ ] `app/model-performance/page.tsx` — assemble sections:
   1. Summary metric card row (4 cards)
   2. Confusion matrix + feature importance side-by-side
   3. Confidence distribution histogram
   4. Model version timeline table
 
-### I-4: Channel Analytics page (`app/channel-analytics/`)
-Product analytics focused — answers "what drives virality on these channels?"
+### I-4: Channel Analytics — two-tier routing
 
-- [ ] Add `"Channel Analytics"` tab to Header routes (href: `/channel-analytics`)
-- [ ] Create `consts/channelAnalytics.ts` — dummy data:
-  - Per-channel benchmarks: avg_views_30d, viral_rate, engagement_rate, uploads_per_week, subscriber_tier
-  - Posting heatmap: 7×24 grid of avg view velocity (day × hour)
-  - Velocity curves: 3 arrays of {hour, views} for viral / average / underperforming
-- [ ] `components/ChannelBenchmarkTable.tsx` — sortable table (click column header to sort)
-  - Columns: Channel, Subscriber Tier, Avg Views, Viral Rate, Engagement Rate, Uploads/wk
-  - Tier badge (micro/small/medium/large) with color coding
-- [ ] `components/PostingHeatmap.tsx` — 7×24 color grid (Tailwind bg-opacity for intensity)
-  - Rows = Mon–Sun, Cols = 12am–11pm, color = view velocity quartile
-- [ ] `components/VelocityCurveChart.tsx` — multi-line chart (Recharts LineChart)
-  - 3 traces: viral (green), average (yellow), underperforming (red)
-  - X = hours since publish (0–72), Y = cumulative views
-- [ ] `app/channel-analytics/page.tsx` — assemble sections:
-  1. Page header with description
-  2. Channel Benchmarks sortable table
-  3. Best Time to Post heatmap (with insight callout)
-  4. View Velocity Curves (72h window)
+Two levels: cross-channel overview + per-channel deep dive.
+Copy sidebar pattern from predictions (same layout.tsx + ChannelsSidebar approach, links point to `/channel-analytics/[id]`).
+
+#### Routing structure
+```
+/channel-analytics          → cross-channel overview (comparative)
+/channel-analytics/[id]     → single channel deep dive
+```
+
+#### I-4a: Routing + layout scaffold
+- [ ] Create `app/channel-analytics/layout.tsx` — copy `app/predictions/layout.tsx`, sidebar links point to `/channel-analytics/[id]`
+- [ ] Update `components/ChannelsSidebar.tsx` — accept a `basePath` prop (defaults to `/predictions`) so it can be reused for channel analytics
+- [ ] Create `app/channel-analytics/[id]/page.tsx` — stub
+
+#### I-4b: Dummy data (`consts/channelAnalytics.ts`)
+- [ ] Per-channel benchmark data: `avg_views_30d`, `viral_rate`, `engagement_rate` (like/view ratio), `comment_rate`, `uploads_per_week`, `subscriber_tier`, `consistency_score` (std dev of views)
+- [ ] Channel growth snapshots: `{date, subscriber_count, view_count}[]` per channel (last 90 days)
+- [ ] Upload cadence data: `{video_id, title, published_at, days_since_prev}[]` per channel
+- [ ] Duration buckets: `{bucket: "0-5min"|"5-10"|"10-20"|"20+", avg_views, video_count}[]` per channel
+- [ ] Comment sentiment trend: `{week, avg_sentiment, avg_toxicity}[]` per channel
+- [ ] Title evolution: `{month, avg_title_length, avg_caps_ratio, avg_power_words}[]` per channel
+
+#### I-4c: Cross-channel overview (`/channel-analytics`)
+- [ ] **Channel Volatility Scatter** (Recharts ScatterChart) — x = avg views, y = std dev of views; each dot = channel; quadrants: "Consistent Hits" (high avg, low variance), "Boom or Bust" (high avg, high variance), "Reliable Niche" (low avg, low variance), "Unpredictable" (low avg, high variance)
+- [ ] **Engagement Rate Rankings** — horizontal bar chart, channels ranked by like/view ratio and comment/view ratio side by side
+- [ ] **Channel Benchmarks Table** — sortable: Channel, Tier badge, Avg Views, Viral Rate, Engagement Rate, Consistency Score, Uploads/wk
+- [ ] Assemble `/channel-analytics/page.tsx`:
+  1. Page header + description
+  2. Volatility scatter (full width)
+  3. Engagement rankings + benchmarks table side by side
+
+#### I-4d: Per-channel deep dive (`/channel-analytics/[id]`)
+Layout mirrors `/predictions/[id]` — sidebar on left, content on right, breadcrumb at top.
+
+**Growth & Health section**
+- [ ] **Subscriber Growth Curve** — Recharts LineChart, `{date, subscriber_count}[]` over last 90 days
+- [ ] **Upload Cadence Chart** — bar chart of days between each upload; highlight gaps > 14 days in red; shows consistency visually
+
+**Content Strategy section**
+- [ ] **Duration Sweet Spot** — bar chart of duration buckets (0-5min / 5-10 / 10-20 / 20+) with avg views per bucket for this channel specifically
+- [ ] **Upload Frequency vs Performance** — scatter: `{uploads_in_last_7d, avg_views_that_week}` over time — does posting more hurt per-video performance?
+
+**Audience Intelligence section**
+- [ ] **Comment Sentiment Trend** — dual-line chart: avg_sentiment (blue) + avg_toxicity (red) over time; flat/declining sentiment = early warning
+- [ ] **Controversy Signal** — scatter: toxicity score vs view count per video — do divisive comment sections drive more views for this channel?
+
+**Title Evolution section**
+- [ ] **Title Strategy Over Time** — multi-line chart: title length, caps ratio, power word count per month — shows how the channel has iterated on its content strategy
+
+- [ ] Assemble `/channel-analytics/[id]/page.tsx`:
+  1. Breadcrumb + channel header (same pattern as predictions/[id])
+  2. Growth & Health section (subscriber curve + cadence side by side)
+  3. Content Strategy section (duration sweet spot + frequency scatter)
+  4. Audience Intelligence section (sentiment trend + controversy scatter)
+  5. Title Evolution section (full width)

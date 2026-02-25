@@ -5,9 +5,9 @@ import Image from "next/image";
 import React from "react";
 import { usePathname } from "next/navigation";
 
-const ChannelsSidebar = () => {
+const ChannelsSidebar = ({ basePath = "/predictions" }: { basePath?: string }) => {
   const pathname = usePathname();
-  const currentChannelId = pathname.split("/")[2]; // Extract ID from /predictions/[id]
+  const currentChannelId = pathname.split("/")[2];
 
   return (
     <div className="bg-white border-r border-gray-200">
@@ -19,7 +19,7 @@ const ChannelsSidebar = () => {
           return (
             <li key={channel.id}>
               <a
-                href={`/predictions/${channel.id}`}
+                href={`${basePath}/${channel.id}`}
                 className={`flex items-center p-4 rounded-xl transition-colors ${
                   isActive ? "bg-blue-100 border-blue-500" : "hover:bg-gray-100"
                 }`}
