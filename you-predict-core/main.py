@@ -4,12 +4,15 @@ Three trigger surfaces share this single Cloud Run deployment:
   - GET/POST /webhook  — PubSubHubbub push notifications
   - POST /tasks/*      — Cloud Tasks fan-out handlers
   - POST /pipelines/*  — Cloud Scheduler triggered pipelines
+  - GET  /analytics/*  — Dashboard read endpoints
 """
 
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+from src.services.analytics import router as analytics_router
 from src.services.pipelines import router as pipelines_router
 from src.services.snapshot_handler import router as tasks_router
 from src.services.webhook import router as webhook_router
@@ -21,6 +24,17 @@ logging.basicConfig(
 
 app = FastAPI(title="You Predict Core")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
 app.include_router(webhook_router)
 app.include_router(tasks_router)
 app.include_router(pipelines_router)
+app.include_router(analytics_router)

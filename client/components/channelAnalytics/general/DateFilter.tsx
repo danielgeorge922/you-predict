@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 
 const OPTIONS = [
@@ -9,17 +9,20 @@ const OPTIONS = [
   { label: "30d", value: 30 },
 ];
 
-const DateFilter = () => {
-  const [selected, setSelected] = useState(7);
+interface DateFilterProps {
+  value: number;
+  onChange: (days: number) => void;
+}
 
+const DateFilter = ({ value, onChange }: DateFilterProps) => {
   return (
     <div className="flex gap-1">
       {OPTIONS.map((opt) => (
         <Button
           key={opt.value}
           size="sm"
-          variant={selected === opt.value ? "default" : "outline"}
-          onClick={() => setSelected(opt.value)}
+          variant={value === opt.value ? "default" : "outline"}
+          onClick={() => onChange(opt.value)}
         >
           {opt.label}
         </Button>
